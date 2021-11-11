@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -38,7 +39,11 @@ type dataSourceVersion struct {
 
 func (r dataSourceVersion) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
 	resourceState := dataSourceVersionType{}
-	output, err := cmds.RunCommandReturnOutput("packer", "version")
+	exe, _ := os.Executable()
+	output, err := cmds.RunCommandWithEnvReturnOutput(
+		exe,
+		map[string]string{"TPP_RUN_PACKER": "true"},
+		"version")
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return

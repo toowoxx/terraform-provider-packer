@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"os"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -92,12 +93,18 @@ func (r resourceBuild) ImportState(ctx context.Context, req tfsdk.ImportResource
 
 func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
 	envVars := resourceState.Environment
+	if envVars == nil {
+		envVars = map[string]string{}
+	}
 	for key, value := range resourceState.Variables {
 		envVars["PKR_VAR_"+key] = value
 	}
+	envVars["TPP_RUN_PACKER"] = "true"
+
+	exe, _ := os.Executable()
 
 	err := cmds.RunCommandWithEnv(
-		"packer",
+		exe,
 		envVars,
 		append([]string{"build", resourceState.File.Value}, resourceState.AdditionalParams...)...,
 	)
