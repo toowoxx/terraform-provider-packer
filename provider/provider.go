@@ -15,8 +15,7 @@ func New() tfsdk.Provider {
 	return &provider{}
 }
 
-type provider struct{
-
+type provider struct {
 }
 
 func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -33,7 +32,7 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
 	exe, _ := os.Executable()
-	err := cmds.RunCommandWithEnv(exe, map[string]string{"TPP_RUN_PACKER":"true"}, "version")
+	err := cmds.RunCommandWithEnv(exe, map[string]string{"TPP_RUN_PACKER": "true"}, "version")
 	if err != nil {
 		panic(err)
 	}

@@ -14,64 +14,64 @@ import (
 	"terraform-provider-packer/funcs"
 )
 
-type resourceBuildType struct{
-	ID types.String `tfsdk:"id"`
-	Variables map[string]string `tfsdk:"variables"`
-	AdditionalParams []string `tfsdk:"additional_params"`
-	Directory types.String `tfsdk:"directory"`
-	File types.String `tfsdk:"file"`
-	FileHash types.String `tfsdk:"file_hash"`
-	FileDependencies []string `tfsdk:"file_dependencies"`
-	FileDependenciesHash types.String `tfsdk:"file_dependencies_hash"`
-	Environment map[string]string `tfsdk:"environment"`
+type resourceBuildType struct {
+	ID                   types.String      `tfsdk:"id"`
+	Variables            map[string]string `tfsdk:"variables"`
+	AdditionalParams     []string          `tfsdk:"additional_params"`
+	Directory            types.String      `tfsdk:"directory"`
+	File                 types.String      `tfsdk:"file"`
+	FileHash             types.String      `tfsdk:"file_hash"`
+	FileDependencies     []string          `tfsdk:"file_dependencies"`
+	FileDependenciesHash types.String      `tfsdk:"file_dependencies_hash"`
+	Environment          map[string]string `tfsdk:"environment"`
 }
 
-func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)  {
+func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type: types.StringType,
+				Type:     types.StringType,
 				Computed: true,
 			},
 			"variables": {
 				Description: "Variables to pass to Packer",
-				Type: types.MapType{ElemType: types.StringType},
-				Optional: true,
+				Type:        types.MapType{ElemType: types.StringType},
+				Optional:    true,
 			},
 			"additional_params": {
 				Description: "Additional parameters to pass to Packer",
-				Type: types.SetType{ElemType: types.StringType},
-				Optional: true,
+				Type:        types.SetType{ElemType: types.StringType},
+				Optional:    true,
 			},
 			"directory": {
 				Description: "Working directory to run Packer inside. Default is cwd.",
-				Type: types.StringType,
-				Optional: true,
+				Type:        types.StringType,
+				Optional:    true,
 			},
 			"file": {
 				Description: "Packer file to use for building",
-				Type: types.StringType,
-				Required: true,
+				Type:        types.StringType,
+				Required:    true,
 			},
 			"file_hash": {
 				Description: "Hash of the file provided. Used for updates.",
-				Type: types.StringType,
-				Computed: true,
+				Type:        types.StringType,
+				Computed:    true,
 			},
 			"file_dependencies_hash": {
 				Description: "Hash of file dependencies combined",
-				Type: types.StringType,
-				Computed: true,
+				Type:        types.StringType,
+				Computed:    true,
 			},
 			"file_dependencies": {
 				Description: "Files that should be depended on so that the resource is updated when these files change",
-				Type: types.SetType{ElemType: types.StringType},
-				Optional: true,
+				Type:        types.SetType{ElemType: types.StringType},
+				Optional:    true,
 			},
 			"environment": {
 				Description: "Environment variables",
-				Type: types.MapType{ElemType: types.StringType},
-				Optional: true,
+				Type:        types.MapType{ElemType: types.StringType},
+				Optional:    true,
 			},
 		},
 	}, nil
