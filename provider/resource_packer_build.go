@@ -4,14 +4,17 @@ import (
 	"context"
 	"os"
 
+	"terraform-provider-packer/crypto_util"
+	"terraform-provider-packer/funcs"
+
+	"github.com/pkg/errors"
+
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/toowoxx/go-lib-userspace-common/cmds"
-	"terraform-provider-packer/crypto_util"
-	"terraform-provider-packer/funcs"
 )
 
 type resourceBuildType struct {
@@ -24,6 +27,7 @@ type resourceBuildType struct {
 	FileDependencies     []string          `tfsdk:"file_dependencies"`
 	FileDependenciesHash types.String      `tfsdk:"file_dependencies_hash"`
 	Environment          map[string]string `tfsdk:"environment"`
+	Triggers             map[string]string `tfsdk:"triggers"`
 }
 
 func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -73,6 +77,11 @@ func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Type:        types.MapType{ElemType: types.StringType},
 				Optional:    true,
 			},
+			"triggers": {
+				Description: "Values that, when changed, trigger an update of this resource",
+				Type:        types.MapType{ElemType: types.StringType},
+				Optional:    true,
+			},
 		},
 	}, nil
 }
@@ -96,20 +105,24 @@ func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
 	if envVars == nil {
 		envVars = map[string]string{}
 	}
-	for key, value := range resourceState.Variables {
-		envVars["PKR_VAR_"+key] = value
-	}
 	envVars["TPP_RUN_PACKER"] = "true"
+
+	params := []string{"build"}
+	for key, value := range resourceState.Variables {
+		params = append(params, "-var", key+"="+value)
+	}
+	params = append(params, resourceState.File.Value)
+	params = append(params, resourceState.AdditionalParams...)
 
 	exe, _ := os.Executable()
 
-	err := cmds.RunCommandWithEnv(
+	output, err := cmds.RunCommandWithEnvReturnOutput(
 		exe,
 		envVars,
-		append([]string{"build", resourceState.File.Value}, resourceState.AdditionalParams...)...,
+		params...,
 	)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not run packer command; output: "+string(output))
 	}
 
 	return nil

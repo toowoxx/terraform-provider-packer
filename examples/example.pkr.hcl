@@ -1,1 +1,4 @@
-# file is empty on purpose (example)
+
+variable "test_var1" {
+  type = string
+}
