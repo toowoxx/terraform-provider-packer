@@ -1,6 +1,6 @@
 .DS_Store
 
-./terraform-provider-*
+/terraform-provider-*
 bin
 
 # Local .terraform directories
