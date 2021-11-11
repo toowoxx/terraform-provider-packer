@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -31,7 +32,8 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 }
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
-	err := cmds.RunCommand("packer", "version")
+	exe, _ := os.Executable()
+	err := cmds.RunCommandWithEnv(exe, map[string]string{"TPP_RUN_PACKER":"true"}, "version")
 	if err != nil {
 		panic(err)
 	}
