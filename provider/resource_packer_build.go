@@ -101,9 +101,9 @@ func (r resourceBuild) ImportState(ctx context.Context, req tfsdk.ImportResource
 }
 
 func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
-	envVars := resourceState.Environment
-	if envVars == nil {
-		envVars = map[string]string{}
+	envVars := map[string]string{}
+	for key, value := range resourceState.Environment {
+		envVars[key] = value
 	}
 	envVars["TPP_RUN_PACKER"] = "true"
 
