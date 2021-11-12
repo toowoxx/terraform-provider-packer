@@ -105,7 +105,7 @@ func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
 	for key, value := range resourceState.Environment {
 		envVars[key] = value
 	}
-	envVars["TPP_RUN_PACKER"] = "true"
+	envVars[tppRunPacker] = "true"
 
 	params := []string{"build"}
 	for key, value := range resourceState.Variables {

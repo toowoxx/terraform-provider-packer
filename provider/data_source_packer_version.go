@@ -42,7 +42,7 @@ func (r dataSourceVersion) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	exe, _ := os.Executable()
 	output, err := cmds.RunCommandWithEnvReturnOutput(
 		exe,
-		map[string]string{"TPP_RUN_PACKER": "true"},
+		map[string]string{tppRunPacker: "true"},
 		"version")
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
