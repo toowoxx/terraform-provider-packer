@@ -31,6 +31,7 @@ description: |-
 
 ### Read-Only
 
+- **build_uuid** (String) UUID that is updated whenever the build has finished. This allows detecting changes.
 - **file_dependencies_hash** (String) Hash of file dependencies combined
 - **file_hash** (String) Hash of the file provided. Used for updates.
 - **id** (String) The ID of this resource.

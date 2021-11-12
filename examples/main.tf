@@ -36,3 +36,11 @@ resource "packer_build" "build2" {
 output "packer_version" {
   value = data.packer_version.version.version
 }
+
+output "build_uuid_1" {
+  value = resource.packer_build.build1.build_uuid
+}
+
+output "build_uuid_2" {
+  value = resource.packer_build.build2.build_uuid
+}

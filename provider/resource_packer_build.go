@@ -29,6 +29,7 @@ type resourceBuildType struct {
 	Environment          map[string]string `tfsdk:"environment"`
 	Triggers             map[string]string `tfsdk:"triggers"`
 	Force                types.Bool        `tfsdk:"force"`
+	BuildUUID            types.String      `tfsdk:"build_uuid"`
 }
 
 func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -87,6 +88,11 @@ func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Description: "Values that, when changed, trigger an update of this resource",
 				Type:        types.MapType{ElemType: types.StringType},
 				Optional:    true,
+			},
+			"build_uuid": {
+				Description: "UUID that is updated whenever the build has finished. This allows detecting changes.",
+				Type:        types.StringType,
+				Computed:    true,
 			},
 		},
 	}, nil
@@ -157,6 +163,7 @@ func (r resourceBuild) updateState(resourceState *resourceBuildType) error {
 	if resourceState.ID.Unknown {
 		resourceState.ID = types.String{Value: uuid.Must(uuid.NewRandom()).String()}
 	}
+	resourceState.BuildUUID = types.String{Value: uuid.Must(uuid.NewRandom()).String()}
 
 	if err := r.updateAutoComputed(resourceState); err != nil {
 		return err
