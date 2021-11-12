@@ -7,6 +7,7 @@ require (
 	github.com/hashicorp/packer v1.7.8
 	github.com/hashicorp/terraform-plugin-framework v0.4.2
 	github.com/hashicorp/terraform-plugin-go v0.4.0
+	github.com/pkg/errors v0.9.1
 	github.com/toowoxx/go-lib-userspace-common v0.7.1
 )
 
@@ -219,7 +220,6 @@ require (
 	github.com/outscale/osc-sdk-go v1.11.2 // indirect
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/sftp v1.13.2 // indirect
 	github.com/posener/complete v1.2.3 // indirect
 	github.com/profitbricks/profitbricks-sdk-go v4.0.2+incompatible // indirect

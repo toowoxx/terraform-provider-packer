@@ -25,6 +25,8 @@ description: |-
 - **directory** (String) Working directory to run Packer inside. Default is cwd.
 - **environment** (Map of String) Environment variables
 - **file_dependencies** (Set of String) Files that should be depended on so that the resource is updated when these files change
+- **force** (Boolean) Force overwriting existing images
+- **triggers** (Map of String) Values that, when changed, trigger an update of this resource
 - **variables** (Map of String) Variables to pass to Packer
 
 ### Read-Only

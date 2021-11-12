@@ -23,6 +23,7 @@ resource "packer_build" "build1" {
 
 resource "packer_build" "build2" {
   file = "example2.pkr.hcl"
+  force = true
   variables = {
     test_var2 = "test 2"
   }

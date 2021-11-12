@@ -28,6 +28,7 @@ type resourceBuildType struct {
 	FileDependenciesHash types.String      `tfsdk:"file_dependencies_hash"`
 	Environment          map[string]string `tfsdk:"environment"`
 	Triggers             map[string]string `tfsdk:"triggers"`
+	Force                types.Bool        `tfsdk:"force"`
 }
 
 func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -72,6 +73,11 @@ func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Type:        types.SetType{ElemType: types.StringType},
 				Optional:    true,
 			},
+			"force": {
+				Description: "Force overwriting existing images",
+				Type:        types.BoolType,
+				Optional:    true,
+			},
 			"environment": {
 				Description: "Environment variables",
 				Type:        types.MapType{ElemType: types.StringType},
@@ -110,6 +116,9 @@ func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
 	params := []string{"build"}
 	for key, value := range resourceState.Variables {
 		params = append(params, "-var", key+"="+value)
+	}
+	if resourceState.Force.Value {
+		params = append(params, "-force")
 	}
 	params = append(params, resourceState.File.Value)
 	params = append(params, resourceState.AdditionalParams...)
