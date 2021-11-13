@@ -4,9 +4,6 @@ import (
 	"context"
 	"os"
 
-	"terraform-provider-packer/crypto_util"
-	"terraform-provider-packer/funcs"
-
 	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
@@ -18,18 +15,15 @@ import (
 )
 
 type resourceBuildType struct {
-	ID                   types.String      `tfsdk:"id"`
-	Variables            map[string]string `tfsdk:"variables"`
-	AdditionalParams     []string          `tfsdk:"additional_params"`
-	Directory            types.String      `tfsdk:"directory"`
-	File                 types.String      `tfsdk:"file"`
-	FileHash             types.String      `tfsdk:"file_hash"`
-	FileDependencies     []string          `tfsdk:"file_dependencies"`
-	FileDependenciesHash types.String      `tfsdk:"file_dependencies_hash"`
-	Environment          map[string]string `tfsdk:"environment"`
-	Triggers             map[string]string `tfsdk:"triggers"`
-	Force                types.Bool        `tfsdk:"force"`
-	BuildUUID            types.String      `tfsdk:"build_uuid"`
+	ID               types.String      `tfsdk:"id"`
+	Variables        map[string]string `tfsdk:"variables"`
+	AdditionalParams []string          `tfsdk:"additional_params"`
+	Directory        types.String      `tfsdk:"directory"`
+	File             types.String      `tfsdk:"file"`
+	Environment      map[string]string `tfsdk:"environment"`
+	Triggers         map[string]string `tfsdk:"triggers"`
+	Force            types.Bool        `tfsdk:"force"`
+	BuildUUID        types.String      `tfsdk:"build_uuid"`
 }
 
 func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -58,21 +52,6 @@ func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Description: "Packer file to use for building",
 				Type:        types.StringType,
 				Required:    true,
-			},
-			"file_hash": {
-				Description: "Hash of the file provided. Used for updates.",
-				Type:        types.StringType,
-				Computed:    true,
-			},
-			"file_dependencies_hash": {
-				Description: "Hash of file dependencies combined",
-				Type:        types.StringType,
-				Computed:    true,
-			},
-			"file_dependencies": {
-				Description: "Files that should be depended on so that the resource is updated when these files change",
-				Type:        types.SetType{ElemType: types.StringType},
-				Optional:    true,
 			},
 			"force": {
 				Description: "Force overwriting existing images",
@@ -143,31 +122,11 @@ func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
 	return nil
 }
 
-func (r resourceBuild) updateAutoComputed(resourceState *resourceBuildType) error {
-	fileHash, err := funcs.FileSHA256(resourceState.File.Value)
-	if err != nil {
-		return err
-	}
-	resourceState.FileHash = types.String{Value: fileHash}
-
-	depFilesHash, err := crypto_util.FilesSHA256(resourceState.FileDependencies...)
-	if err != nil {
-		return err
-	}
-	resourceState.FileDependenciesHash = types.String{Value: depFilesHash}
-
-	return nil
-}
-
 func (r resourceBuild) updateState(resourceState *resourceBuildType) error {
 	if resourceState.ID.Unknown {
 		resourceState.ID = types.String{Value: uuid.Must(uuid.NewRandom()).String()}
 	}
 	resourceState.BuildUUID = types.String{Value: uuid.Must(uuid.NewRandom()).String()}
-
-	if err := r.updateAutoComputed(resourceState); err != nil {
-		return err
-	}
 
 	return nil
 }

@@ -24,7 +24,6 @@ description: |-
 - **additional_params** (Set of String) Additional parameters to pass to Packer
 - **directory** (String) Working directory to run Packer inside. Default is cwd.
 - **environment** (Map of String) Environment variables
-- **file_dependencies** (Set of String) Files that should be depended on so that the resource is updated when these files change
 - **force** (Boolean) Force overwriting existing images
 - **triggers** (Map of String) Values that, when changed, trigger an update of this resource
 - **variables** (Map of String) Variables to pass to Packer
@@ -32,8 +31,6 @@ description: |-
 ### Read-Only
 
 - **build_uuid** (String) UUID that is updated whenever the build has finished. This allows detecting changes.
-- **file_dependencies_hash** (String) Hash of file dependencies combined
-- **file_hash** (String) Hash of the file provided. Used for updates.
 - **id** (String) The ID of this resource.
 
 
