@@ -11,14 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type dataSourceFileDependenciesType struct {
+type dataSourceFilesType struct {
 	File                 types.String `tfsdk:"file"`
 	FileHash             types.String `tfsdk:"file_hash"`
 	FileDependencies     []string     `tfsdk:"file_dependencies"`
 	FileDependenciesHash types.String `tfsdk:"file_dependencies_hash"`
 }
 
-func (d dataSourceFileDependencies) updateAutoComputed(resourceState *dataSourceFileDependenciesType) error {
+func (d dataSourceFiles) updateAutoComputed(resourceState *dataSourceFilesType) error {
 	fileHash, err := funcs.FileSHA256(resourceState.File.Value)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func (d dataSourceFileDependencies) updateAutoComputed(resourceState *dataSource
 	return nil
 }
 
-func (d dataSourceFileDependenciesType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (d dataSourceFilesType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"file": {
@@ -61,18 +61,18 @@ func (d dataSourceFileDependenciesType) GetSchema(_ context.Context) (tfsdk.Sche
 	}, nil
 }
 
-func (d dataSourceFileDependenciesType) NewDataSource(ctx context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
-	return dataSourceFileDependencies{
+func (d dataSourceFilesType) NewDataSource(ctx context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+	return dataSourceFiles{
 		p: *(p.(*provider)),
 	}, nil
 }
 
-type dataSourceFileDependencies struct {
+type dataSourceFiles struct {
 	p provider
 }
 
-func (d dataSourceFileDependencies) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
-	resourceState := dataSourceFileDependenciesType{}
+func (d dataSourceFiles) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
+	resourceState := dataSourceFilesType{}
 	diags := req.Config.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {

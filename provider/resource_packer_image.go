@@ -14,7 +14,7 @@ import (
 	"github.com/toowoxx/go-lib-userspace-common/cmds"
 )
 
-type resourceBuildType struct {
+type resourceImageType struct {
 	ID               types.String      `tfsdk:"id"`
 	Variables        map[string]string `tfsdk:"variables"`
 	AdditionalParams []string          `tfsdk:"additional_params"`
@@ -26,7 +26,7 @@ type resourceBuildType struct {
 	BuildUUID        types.String      `tfsdk:"build_uuid"`
 }
 
-func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -77,21 +77,45 @@ func (r resourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 	}, nil
 }
 
-func (r resourceBuildType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	return resourceBuild{
+func (r resourceImageType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+	return resourceImage{
 		p: *(p.(*provider)),
 	}, nil
 }
 
-type resourceBuild struct {
+type resourceImage struct {
 	p provider
 }
 
-func (r resourceBuild) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r resourceImage) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
-func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
+func (r resourceImage) packerInit(resourceState *resourceImageType) error {
+	envVars := map[string]string{}
+	for key, value := range resourceState.Environment {
+		envVars[key] = value
+	}
+	envVars[tppRunPacker] = "true"
+
+	params := []string{"init"}
+	params = append(params, resourceState.File.Value)
+
+	exe, _ := os.Executable()
+
+	output, err := cmds.RunCommandWithEnvReturnOutput(
+		exe,
+		envVars,
+		params...,
+	)
+	if err != nil {
+		return errors.Wrap(err, "could not run packer command; output: "+string(output))
+	}
+
+	return nil
+}
+
+func (r resourceImage) packerBuild(resourceState *resourceImageType) error {
 	envVars := map[string]string{}
 	for key, value := range resourceState.Environment {
 		envVars[key] = value
@@ -122,7 +146,7 @@ func (r resourceBuild) packerBuild(resourceState *resourceBuildType) error {
 	return nil
 }
 
-func (r resourceBuild) updateState(resourceState *resourceBuildType) error {
+func (r resourceImage) updateState(resourceState *resourceImageType) error {
 	if resourceState.ID.Unknown {
 		resourceState.ID = types.String{Value: uuid.Must(uuid.NewRandom()).String()}
 	}
@@ -131,17 +155,22 @@ func (r resourceBuild) updateState(resourceState *resourceBuildType) error {
 	return nil
 }
 
-func (r resourceBuild) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	resourceState := resourceBuildType{}
+func (r resourceImage) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	resourceState := resourceImageType{}
 	diags := req.Config.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.packerBuild(&resourceState)
+	err := r.packerInit(&resourceState)
 	if err != nil {
-		resp.Diagnostics.AddError("Failed to run packer", err.Error())
+		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
+		return
+	}
+	err = r.packerBuild(&resourceState)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
 	}
 	err = r.updateState(&resourceState)
@@ -157,8 +186,8 @@ func (r resourceBuild) Create(ctx context.Context, req tfsdk.CreateResourceReque
 	}
 }
 
-func (r resourceBuild) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var state resourceBuildType
+func (r resourceImage) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	var state resourceImageType
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -172,24 +201,29 @@ func (r resourceBuild) Read(ctx context.Context, req tfsdk.ReadResourceRequest, 
 	}
 }
 
-func (r resourceBuild) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var plan resourceBuildType
+func (r resourceImage) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	var plan resourceImageType
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var state resourceBuildType
+	var state resourceImageType
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.packerBuild(&plan)
+	err := r.packerInit(&plan)
 	if err != nil {
-		resp.Diagnostics.AddError("Failed to run packer", err.Error())
+		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
+		return
+	}
+	err = r.packerBuild(&plan)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
 	}
 	err = r.updateState(&plan)
@@ -205,8 +239,8 @@ func (r resourceBuild) Update(ctx context.Context, req tfsdk.UpdateResourceReque
 	}
 }
 
-func (r resourceBuild) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var state resourceBuildType
+func (r resourceImage) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	var state resourceImageType
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
