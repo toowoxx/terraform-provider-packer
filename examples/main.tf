@@ -14,7 +14,7 @@ data "packer_files" "files1" {
   file = "example.pkr.hcl"
 }
 data "packer_files" "files2" {
-  file = "example2.pkr.hcl"
+  directory = "subdir"
 }
 
 resource "packer_image" "image1" {
@@ -31,10 +31,10 @@ resource "packer_image" "image1" {
 }
 
 resource "packer_image" "image2" {
-  file = data.packer_files.files2.file
+  directory = data.packer_files.files2.directory
   force = true
   variables = {
-    test_var2 = "test 2"
+    test_var3 = "test 3"
   }
 
   triggers = {
