@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"terraform-provider-packer/crypto_util"
-	"terraform-provider-packer/funcs"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -12,24 +11,18 @@ import (
 )
 
 type dataSourceFilesType struct {
-	File                 types.String `tfsdk:"file"`
-	FileHash             types.String `tfsdk:"file_hash"`
-	FileDependencies     []string     `tfsdk:"file_dependencies"`
-	FileDependenciesHash types.String `tfsdk:"file_dependencies_hash"`
+	File             types.String `tfsdk:"file"`
+	FilesHash        types.String `tfsdk:"files_hash"`
+	FileDependencies []string     `tfsdk:"file_dependencies"`
 }
 
 func (d dataSourceFiles) updateAutoComputed(resourceState *dataSourceFilesType) error {
-	fileHash, err := funcs.FileSHA256(resourceState.File.Value)
+	depFilesHash, err := crypto_util.FilesSHA256(
+		append([]string{resourceState.File.Value}, resourceState.FileDependencies...)...)
 	if err != nil {
 		return err
 	}
-	resourceState.FileHash = types.String{Value: fileHash}
-
-	depFilesHash, err := crypto_util.FilesSHA256(resourceState.FileDependencies...)
-	if err != nil {
-		return err
-	}
-	resourceState.FileDependenciesHash = types.String{Value: depFilesHash}
+	resourceState.FilesHash = types.String{Value: depFilesHash}
 
 	return nil
 }
@@ -42,13 +35,8 @@ func (d dataSourceFilesType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				Type:        types.StringType,
 				Required:    true,
 			},
-			"file_hash": {
-				Description: "Hash of the file provided. Used for updates.",
-				Type:        types.StringType,
-				Computed:    true,
-			},
-			"file_dependencies_hash": {
-				Description: "Hash of file dependencies combined",
+			"files_hash": {
+				Description: "Hash of the files provided. Used for updates.",
 				Type:        types.StringType,
 				Computed:    true,
 			},
@@ -61,7 +49,7 @@ func (d dataSourceFilesType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 	}, nil
 }
 
-func (d dataSourceFilesType) NewDataSource(ctx context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+func (d dataSourceFilesType) NewDataSource(_ context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
 	return dataSourceFiles{
 		p: *(p.(*provider)),
 	}, nil
