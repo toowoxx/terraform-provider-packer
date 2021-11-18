@@ -2,11 +2,10 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"os"
-	"os/exec"
 
 	"github.com/pkg/errors"
+	"github.com/toowoxx/go-lib-userspace-common/cmds"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -92,6 +91,22 @@ func (r resourceImage) ImportState(ctx context.Context, req tfsdk.ImportResource
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
+func (r resourceImage) getDir(dir types.String) string {
+	dirVal := dir.Value
+	if dir.Unknown || len(dirVal) == 0 {
+		dirVal = "."
+	}
+	return dirVal
+}
+
+func (r resourceImage) getFileParam(resourceState *resourceImageType) string {
+	if resourceState.File.Null || len(resourceState.File.Value) == 0 {
+		return "."
+	} else {
+		return resourceState.File.Value
+	}
+}
+
 func (r resourceImage) packerInit(resourceState *resourceImageType) error {
 	envVars := map[string]string{}
 	for key, value := range resourceState.Environment {
@@ -99,28 +114,11 @@ func (r resourceImage) packerInit(resourceState *resourceImageType) error {
 	}
 	envVars[tppRunPacker] = "true"
 
-	dir := resourceState.Directory.Value
-	if resourceState.Directory.Unknown || len(dir) == 0 {
-		dir = "."
-	}
-
 	params := []string{"init"}
-	if resourceState.File.Null || len(resourceState.File.Value) == 0 {
-		params = append(params, ".")
-	} else {
-		params = append(params, resourceState.File.Value)
-	}
+	params = append(params, r.getFileParam(resourceState))
 
 	exe, _ := os.Executable()
-
-	cmd := exec.Command(exe, params...)
-	if dir != "." {
-		cmd.Dir = dir
-	}
-	for key, value := range envVars {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
-	}
-	output, err := cmd.Output()
+	output, err := cmds.RunCommandInDirWithEnvReturnOutput(exe, r.getDir(resourceState.Directory), envVars, params...)
 
 	if err != nil {
 		return errors.Wrap(err, "could not run packer command; output: "+string(output))
@@ -136,11 +134,6 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType) error {
 	}
 	envVars[tppRunPacker] = "true"
 
-	dir := resourceState.Directory.Value
-	if resourceState.Directory.Unknown || len(dir) == 0 {
-		dir = "."
-	}
-
 	params := []string{"build"}
 	for key, value := range resourceState.Variables {
 		params = append(params, "-var", key+"="+value)
@@ -148,23 +141,11 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType) error {
 	if resourceState.Force.Value {
 		params = append(params, "-force")
 	}
-	if resourceState.File.Null || len(resourceState.File.Value) == 0 {
-		params = append(params, ".")
-	} else {
-		params = append(params, resourceState.File.Value)
-	}
+	params = append(params, r.getFileParam(resourceState))
 	params = append(params, resourceState.AdditionalParams...)
 
 	exe, _ := os.Executable()
-
-	cmd := exec.Command(exe, params...)
-	if dir != "." {
-		cmd.Dir = dir
-	}
-	for key, value := range envVars {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
-	}
-	output, err := cmd.Output()
+	output, err := cmds.RunCommandInDirWithEnvReturnOutput(exe, r.getDir(resourceState.Directory), envVars, params...)
 	if err != nil {
 		return errors.Wrap(err, "could not run packer command; output: "+string(output))
 	}
