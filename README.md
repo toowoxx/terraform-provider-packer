@@ -29,7 +29,7 @@ of Packer itself.
 You have multiple options for managing your images:
 
  * Import state of the created image after successful deployment
- * Manually manage images by deleting them from your cloud provider or system (for example, you can delete images manually from Azure using the Azure Portal)
+ * Manually manage images, for example, by deleting them from your cloud provider or system (for example, you can delete images manually from Azure using the Azure Portal)
 
 You can use the `force` attribute of resource `packer_image` to overwrite the image every time.
 
