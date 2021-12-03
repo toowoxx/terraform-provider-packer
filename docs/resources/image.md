@@ -22,6 +22,7 @@ description: |-
 - **environment** (Map of String) Environment variables
 - **file** (String) Packer file to use for building
 - **force** (Boolean) Force overwriting existing images
+- **keep_environment** (Boolean) Passes all environment variables of the provider through to Packer
 - **triggers** (Map of String) Values that, when changed, trigger an update of this resource
 - **variables** (Map of String) Variables to pass to Packer
 
