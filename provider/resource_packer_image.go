@@ -4,6 +4,8 @@ import (
 	"context"
 	"os"
 
+	"terraform-provider-packer/packer_interop"
+
 	"github.com/pkg/errors"
 	"github.com/toowoxx/go-lib-userspace-common/cmds"
 
@@ -21,6 +23,7 @@ type resourceImageType struct {
 	Directory        types.String      `tfsdk:"directory"`
 	File             types.String      `tfsdk:"file"`
 	Environment      map[string]string `tfsdk:"environment"`
+	KeepEnvironment  types.Bool        `tfsdk:"keep_environment"`
 	Triggers         map[string]string `tfsdk:"triggers"`
 	Force            types.Bool        `tfsdk:"force"`
 	BuildUUID        types.String      `tfsdk:"build_uuid"`
@@ -61,6 +64,11 @@ func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 			"environment": {
 				Description: "Environment variables",
 				Type:        types.MapType{ElemType: types.StringType},
+				Optional:    true,
+			},
+			"keep_environment": {
+				Description: "Passes all environment variables of the provider through to Packer",
+				Type:        types.BoolType,
 				Optional:    true,
 			},
 			"triggers": {
@@ -108,11 +116,7 @@ func (r resourceImage) getFileParam(resourceState *resourceImageType) string {
 }
 
 func (r resourceImage) packerInit(resourceState *resourceImageType) error {
-	envVars := map[string]string{}
-	for key, value := range resourceState.Environment {
-		envVars[key] = value
-	}
-	envVars[tppRunPacker] = "true"
+	envVars := packer_interop.EnvVars(resourceState.Environment, resourceState.KeepEnvironment.Value)
 
 	params := []string{"init"}
 	params = append(params, r.getFileParam(resourceState))
@@ -128,11 +132,7 @@ func (r resourceImage) packerInit(resourceState *resourceImageType) error {
 }
 
 func (r resourceImage) packerBuild(resourceState *resourceImageType) error {
-	envVars := map[string]string{}
-	for key, value := range resourceState.Environment {
-		envVars[key] = value
-	}
-	envVars[tppRunPacker] = "true"
+	envVars := packer_interop.EnvVars(resourceState.Environment, resourceState.KeepEnvironment.Value)
 
 	params := []string{"build"}
 	for key, value := range resourceState.Variables {

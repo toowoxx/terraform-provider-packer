@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"terraform-provider-packer/packer_interop"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -42,7 +44,7 @@ func (r dataSourceVersion) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	exe, _ := os.Executable()
 	output, err := cmds.RunCommandWithEnvReturnOutput(
 		exe,
-		map[string]string{tppRunPacker: "true"},
+		map[string]string{packer_interop.TPPRunPacker: "true"},
 		"version")
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())

@@ -4,14 +4,14 @@ import (
 	"context"
 	"os"
 
+	"terraform-provider-packer/packer_interop"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/toowoxx/go-lib-userspace-common/cmds"
 )
-
-const tppRunPacker = "TPP_RUN_PACKER"
 
 func New() tfsdk.Provider {
 	return &provider{}
@@ -34,7 +34,7 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
 	exe, _ := os.Executable()
-	err := cmds.RunCommandWithEnv(exe, map[string]string{tppRunPacker: "true"}, "version")
+	err := cmds.RunCommandWithEnv(exe, map[string]string{packer_interop.TPPRunPacker: "true"}, "version")
 	if err != nil {
 		panic(err)
 	}
