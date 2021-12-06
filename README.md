@@ -33,7 +33,7 @@ You have multiple options for managing your images:
 
 You can use the `force` attribute of resource `packer_image` to overwrite the image every time.
 
-The remote state does not affect this provider's ability to function. If you delete an image remotely, Packer will still run and attempt to create a new one which should succeed. There is no fundamental difference between "Creation" and "Update" of a 
+The remote state does not affect this provider's ability to function. If you delete an image remotely, Packer will still run and attempt to create a new one which should succeed. There is no fundamental difference between "Creation" and "Update" of a `packer_image
 
 ## License
 
