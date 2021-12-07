@@ -37,5 +37,5 @@ The remote state does not affect this provider's ability to function. If you del
 
 ## License
 
-[Mozilla Public License v2.0](https://github.com/toowoxx/terraform-provider-packer/blob/main/LICENSE)
+[Mozilla Public License v2.0](LICENSE)
 
