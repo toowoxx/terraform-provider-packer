@@ -21,7 +21,7 @@ func (r dataSourceVersionType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"version": {
-				Description: "Version of installed Packer",
+				Description: "Version of embedded Packer",
 				Computed:    true,
 				Type:        types.StringType,
 			},
