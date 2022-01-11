@@ -27,11 +27,11 @@ func (d dataSourceFiles) updateAutoComputed(resourceState *dataSourceFilesType) 
 		if resourceState.Directory.Unknown || len(dir) == 0 {
 			dir = "."
 		}
-		hclFiles, err := filepath.Glob(resourceState.Directory.Value + "/*.pkr.hcl")
+		hclFiles, err := filepath.Glob(dir + "/*.pkr.hcl")
 		if err != nil {
 			return errors.Wrap(err, "bug")
 		}
-		jsonFiles, err := filepath.Glob(resourceState.Directory.Value + "/*.pkr.json")
+		jsonFiles, err := filepath.Glob(dir + "/*.pkr.json")
 		if err != nil {
 			return errors.Wrap(err, "bug")
 		}
