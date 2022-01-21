@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/hashicorp/packer v1.7.8
+	github.com/hashicorp/packer v1.7.9
 	github.com/hashicorp/terraform-plugin-framework v0.5.0
 	github.com/hashicorp/terraform-plugin-go v0.5.0
 	github.com/pkg/errors v0.9.1
@@ -18,13 +18,13 @@ require (
 )
 
 require (
-	cloud.google.com/go v0.94.1 // indirect
-	cloud.google.com/go/storage v1.16.1 // indirect
+	cloud.google.com/go v0.97.0 // indirect
+	cloud.google.com/go/storage v1.18.2 // indirect
 	github.com/1and1/oneandone-cloudserver-sdk-go v1.0.1 // indirect
 	github.com/Azure/azure-sdk-for-go v57.1.0+incompatible // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.20 // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.15 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.8 // indirect
 	github.com/Azure/go-autorest/autorest/azure/cli v0.4.3 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
@@ -54,7 +54,7 @@ require (
 	github.com/armon/go-metrics v0.3.9 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef // indirect
-	github.com/aws/aws-sdk-go v1.40.54 // indirect
+	github.com/aws/aws-sdk-go v1.41.14 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
@@ -65,7 +65,6 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cheggaaa/pb v1.0.27 // indirect
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/digitalocean/go-libvirt v0.0.0-20210723161134-761cfeeb5968 // indirect
 	github.com/digitalocean/go-qemu v0.0.0-20210326154740-ac9e0b687001 // indirect
 	github.com/digitalocean/godo v1.65.0 // indirect
@@ -96,7 +95,7 @@ require (
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect
 	github.com/golang-collections/collections v0.0.0-20130729185459-604e922904d3 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
-	github.com/golang-jwt/jwt/v4 v4.0.0 // indirect
+	github.com/golang-jwt/jwt/v4 v4.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
@@ -104,7 +103,7 @@ require (
 	github.com/google/go-github/v33 v33.0.1-0.20210113204525-9318e629ec69 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/googleapis/gax-go/v2 v2.1.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
 	github.com/gophercloud/gophercloud v0.12.0 // indirect
 	github.com/gophercloud/utils v0.0.0-20200508015959-b0167b94122c // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
@@ -132,24 +131,24 @@ require (
 	github.com/hashicorp/go-version v1.3.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hashicorp/hcl/v2 v2.10.1 // indirect
-	github.com/hashicorp/hcp-sdk-go v0.13.1-0.20211004174420-0f36fadb8a34 // indirect
-	github.com/hashicorp/packer-plugin-alicloud v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-amazon v1.0.4 // indirect
-	github.com/hashicorp/packer-plugin-ansible v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-azure v1.0.4 // indirect
-	github.com/hashicorp/packer-plugin-chef v1.0.1 // indirect
+	github.com/hashicorp/hcl/v2 v2.11.1 // indirect
+	github.com/hashicorp/hcp-sdk-go v0.15.1-0.20220112153249-f565607d7cc4 // indirect
+	github.com/hashicorp/packer-plugin-alicloud v1.0.1 // indirect
+	github.com/hashicorp/packer-plugin-amazon v1.0.6 // indirect
+	github.com/hashicorp/packer-plugin-ansible v1.0.1 // indirect
+	github.com/hashicorp/packer-plugin-azure v1.0.5 // indirect
+	github.com/hashicorp/packer-plugin-chef v1.0.2 // indirect
 	github.com/hashicorp/packer-plugin-cloudstack v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-converge v1.0.0 // indirect
+	github.com/hashicorp/packer-plugin-converge v1.0.1 // indirect
 	github.com/hashicorp/packer-plugin-digitalocean v1.0.1 // indirect
-	github.com/hashicorp/packer-plugin-docker v1.0.2 // indirect
-	github.com/hashicorp/packer-plugin-googlecompute v1.0.6 // indirect
-	github.com/hashicorp/packer-plugin-hcloud v1.0.1 // indirect
+	github.com/hashicorp/packer-plugin-docker v1.0.3 // indirect
+	github.com/hashicorp/packer-plugin-googlecompute v1.0.9 // indirect
+	github.com/hashicorp/packer-plugin-hcloud v1.0.2 // indirect
 	github.com/hashicorp/packer-plugin-hyperone v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-hyperv v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-inspec v0.0.7 // indirect
+	github.com/hashicorp/packer-plugin-hyperv v1.0.1 // indirect
+	github.com/hashicorp/packer-plugin-inspec v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-jdcloud v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-linode v1.0.0 // indirect
+	github.com/hashicorp/packer-plugin-linode v1.0.1 // indirect
 	github.com/hashicorp/packer-plugin-lxc v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-lxd v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-ncloud v1.0.1 // indirect
@@ -159,19 +158,19 @@ require (
 	github.com/hashicorp/packer-plugin-outscale v1.0.2 // indirect
 	github.com/hashicorp/packer-plugin-parallels v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-profitbricks v1.0.1 // indirect
-	github.com/hashicorp/packer-plugin-proxmox v1.0.2 // indirect
-	github.com/hashicorp/packer-plugin-puppet v1.0.0 // indirect
+	github.com/hashicorp/packer-plugin-proxmox v1.0.4 // indirect
+	github.com/hashicorp/packer-plugin-puppet v1.0.1 // indirect
 	github.com/hashicorp/packer-plugin-qemu v1.0.1 // indirect
-	github.com/hashicorp/packer-plugin-salt v0.0.8 // indirect
-	github.com/hashicorp/packer-plugin-sdk v0.2.8 // indirect
-	github.com/hashicorp/packer-plugin-tencentcloud v1.0.1 // indirect
+	github.com/hashicorp/packer-plugin-salt v1.0.0 // indirect
+	github.com/hashicorp/packer-plugin-sdk v0.2.11 // indirect
+	github.com/hashicorp/packer-plugin-tencentcloud v1.0.3 // indirect
 	github.com/hashicorp/packer-plugin-triton v1.0.0 // indirect
 	github.com/hashicorp/packer-plugin-ucloud v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-vagrant v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-virtualbox v1.0.0 // indirect
-	github.com/hashicorp/packer-plugin-vmware v1.0.3 // indirect
+	github.com/hashicorp/packer-plugin-vagrant v1.0.1 // indirect
+	github.com/hashicorp/packer-plugin-virtualbox v1.0.1 // indirect
+	github.com/hashicorp/packer-plugin-vmware v1.0.5 // indirect
 	github.com/hashicorp/packer-plugin-vsphere v1.0.2 // indirect
-	github.com/hashicorp/packer-plugin-yandex v1.0.2 // indirect
+	github.com/hashicorp/packer-plugin-yandex v1.0.3 // indirect
 	github.com/hashicorp/serf v0.9.5 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.2.0 // indirect
 	github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896 // indirect
@@ -195,7 +194,7 @@ require (
 	github.com/klauspost/pgzip v1.2.5 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/kr/fs v0.1.0 // indirect
-	github.com/linode/linodego v0.28.5 // indirect
+	github.com/linode/linodego v0.30.0 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/masterzen/simplexml v0.0.0-20190410153822-31eea3082786 // indirect
 	github.com/masterzen/winrm v0.0.0-20210623064412-3b76017826b0 // indirect
@@ -246,25 +245,26 @@ require (
 	github.com/vmware/govmomi v0.26.1 // indirect
 	github.com/xanzy/go-cloudstack v2.4.1+incompatible // indirect
 	github.com/xanzy/ssh-agent v0.3.0 // indirect
-	github.com/yandex-cloud/go-genproto v0.0.0-20210824140926-1bca7bc0c005 // indirect
-	github.com/yandex-cloud/go-sdk v0.0.0-20210824141121-182aedd44a25 // indirect
+	github.com/yandex-cloud/go-genproto v0.0.0-20211202135052-789603780fb2 // indirect
+	github.com/yandex-cloud/go-sdk v0.0.0-20211206101223-7c4e7926bf53 // indirect
 	github.com/zclconf/go-cty v1.10.0 // indirect
 	github.com/zclconf/go-cty-yaml v1.0.1 // indirect
 	go.mongodb.org/mongo-driver v1.4.6 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5 // indirect
+	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
 	golang.org/x/mobile v0.0.0-20210901025245-1fde1d6c3ca1 // indirect
 	golang.org/x/net v0.0.0-20210902165921-8d991716f632 // indirect
-	golang.org/x/oauth2 v0.0.0-20210819190943-2bc19b11175f // indirect
+	golang.org/x/oauth2 v0.0.0-20211005180243-6b3c2da341f1 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20210831042530-f4d43177bf5e // indirect
+	golang.org/x/sys v0.0.0-20210917161153-d61c044b1678 // indirect
 	golang.org/x/term v0.0.0-20210615171337-6886f2dfbf5b // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
-	google.golang.org/api v0.56.0 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
+	google.golang.org/api v0.58.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20210831024726-fe130286e0e2 // indirect
-	google.golang.org/grpc v1.40.0 // indirect
+	google.golang.org/genproto v0.0.0-20211021150943-2b146023228c // indirect
+	google.golang.org/grpc v1.41.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
@@ -272,4 +272,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace github.com/hashicorp/packer v1.7.8 => github.com/toowoxx/packer v1.7.8-toowoxx.custom.100
+replace github.com/hashicorp/packer v1.7.9 => github.com/toowoxx/packer v1.7.9-toowoxx.custom.100
