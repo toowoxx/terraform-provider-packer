@@ -17,4 +17,4 @@ description: |-
 
 ### Optional
 
-- **dummy** (String)
+- **dummy** (String) Used as a placeholder. Do not use.

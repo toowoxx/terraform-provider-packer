@@ -17,6 +17,6 @@ description: |-
 
 ### Read-Only
 
-- **version** (String) Version of installed Packer
+- **version** (String) Version of embedded Packer
 
 
