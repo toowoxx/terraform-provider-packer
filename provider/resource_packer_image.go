@@ -27,6 +27,7 @@ type resourceImageType struct {
 	Triggers         map[string]string `tfsdk:"triggers"`
 	Force            types.Bool        `tfsdk:"force"`
 	BuildUUID        types.String      `tfsdk:"build_uuid"`
+	Name             types.String      `tfsdk:"name"`
 }
 
 func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -35,6 +36,11 @@ func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 			"id": {
 				Type:     types.StringType,
 				Computed: true,
+			},
+			"name": {
+				Description: "Name of this build. Mainly used for data source packer_build",
+				Type:        types.StringType,
+				Optional:    true,
 			},
 			"variables": {
 				Description: "Variables to pass to Packer",
@@ -170,6 +176,11 @@ func (r resourceImage) Create(ctx context.Context, req tfsdk.CreateResourceReque
 		return
 	}
 
+	if err := state.StartBuild(&resourceState); err != nil {
+		resp.Diagnostics.AddError("Failed to mark build as started", err.Error())
+		return
+	}
+
 	err := r.packerInit(&resourceState)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
@@ -186,6 +197,9 @@ func (r resourceImage) Create(ctx context.Context, req tfsdk.CreateResourceReque
 		return
 	}
 
+	state.RefreshBuildData(&resourceState)
+	state.CompleteBuild(resourceState.Name.Value, true)
+
 	diags = resp.State.Set(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -194,14 +208,18 @@ func (r resourceImage) Create(ctx context.Context, req tfsdk.CreateResourceReque
 }
 
 func (r resourceImage) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var state resourceImageType
-	diags := req.State.Get(ctx, &state)
+	var resourceState resourceImageType
+	diags := req.State.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	diags = resp.State.Set(ctx, &state)
+	if !resourceState.Name.Null {
+		state.RefreshBuildData(&resourceState)
+	}
+
+	diags = resp.State.Set(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -216,10 +234,15 @@ func (r resourceImage) Update(ctx context.Context, req tfsdk.UpdateResourceReque
 		return
 	}
 
-	var state resourceImageType
-	diags = req.State.Get(ctx, &state)
+	var resourceState resourceImageType
+	diags = req.State.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := state.StartBuild(&resourceState); err != nil {
+		resp.Diagnostics.AddError("Failed to mark build as started", err.Error())
 		return
 	}
 
@@ -238,6 +261,9 @@ func (r resourceImage) Update(ctx context.Context, req tfsdk.UpdateResourceReque
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
+
+	state.RefreshBuildData(&plan)
+	state.CompleteBuild(resourceState.Name.Value, true)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)

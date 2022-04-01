@@ -30,6 +30,14 @@ resource "packer_image" "image1" {
   }
 }
 
+resource "random_string" "random" {
+  length  = 16
+  special = false
+  lower   = true
+  upper   = true
+  number  = true
+}
+
 resource "packer_image" "image2" {
   directory = data.packer_files.files2.directory
   force     = true
@@ -37,11 +45,16 @@ resource "packer_image" "image2" {
     test_var3 = "test 3"
   }
   keep_environment = true
+  name             = random_string.random.result
 
   triggers = {
     packer_version = data.packer_version.version.version
     files_hash     = data.packer_files.files2.files_hash
   }
+}
+
+data "packer_build" "image2_wait" {
+  name = random_string.random.result
 }
 
 output "packer_version" {
@@ -54,6 +67,10 @@ output "build_uuid_1" {
 
 output "build_uuid_2" {
   value = resource.packer_image.image2.build_uuid
+}
+
+output "build_wait_uuid_2" {
+  value = data.packer_build.image2_wait.uuid
 }
 
 output "file_hash_1" {

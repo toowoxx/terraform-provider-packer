@@ -53,5 +53,6 @@ func (p *provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourc
 	return map[string]tfsdk.DataSourceType{
 		"packer_version": dataSourceVersionType{},
 		"packer_files":   dataSourceFilesType{},
+		"packer_build":   dataSourceBuildType{},
 	}, nil
 }

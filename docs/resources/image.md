@@ -17,18 +17,19 @@ description: |-
 
 ### Optional
 
-- **additional_params** (Set of String) Additional parameters to pass to Packer
-- **directory** (String) Working directory to run Packer inside. Default is cwd.
-- **environment** (Map of String) Environment variables
-- **file** (String) Packer file to use for building
-- **force** (Boolean) Force overwriting existing images
-- **keep_environment** (Boolean) Passes all environment variables of the provider through to Packer
-- **triggers** (Map of String) Values that, when changed, trigger an update of this resource
-- **variables** (Map of String) Variables to pass to Packer
+- `additional_params` (Set of String) Additional parameters to pass to Packer
+- `directory` (String) Working directory to run Packer inside. Default is cwd.
+- `environment` (Map of String) Environment variables
+- `file` (String) Packer file to use for building
+- `force` (Boolean) Force overwriting existing images
+- `keep_environment` (Boolean) Passes all environment variables of the provider through to Packer
+- `name` (String) Name of this build. Mainly used for data source packer_build
+- `triggers` (Map of String) Values that, when changed, trigger an update of this resource
+- `variables` (Map of String) Variables to pass to Packer
 
 ### Read-Only
 
-- **build_uuid** (String) UUID that is updated whenever the build has finished. This allows detecting changes.
-- **id** (String) The ID of this resource.
+- `build_uuid` (String) UUID that is updated whenever the build has finished. This allows detecting changes.
+- `id` (String) The ID of this resource.
 
 

@@ -17,12 +17,12 @@ Specify files to detect changes. By default, the current directory will be used.
 
 ### Optional
 
-- **directory** (String) Directory to run packer in. Defaults to cwd.
-- **file** (String) Packer file to use for building
-- **file_dependencies** (Set of String) Files that should be depended on so that the resource is updated when these files change
+- `directory` (String) Directory to run packer in. Defaults to cwd.
+- `file` (String) Packer file to use for building
+- `file_dependencies` (Set of String) Files that should be depended on so that the resource is updated when these files change
 
 ### Read-Only
 
-- **files_hash** (String) Hash of the files provided. Used for updates.
+- `files_hash` (String) Hash of the files provided. Used for updates.
 
 
