@@ -3,12 +3,12 @@
 page_title: "packer_build Data Source - terraform-provider-packer"
 subcategory: ""
 description: |-
-  Waits for the build specified by its name to finish. This is only useful when you define the name outside of the packerimage resource, allowing both the packerimage resource and this data source to reference the same build. Use this if you want to have the image created before recreating a VM when recreation involves deletion in which case the downtime would include the image build process.
+  [Experimental] Waits for the build specified by its name to finish. This is only useful when you define the name outside of the packerimage resource, allowing both the packerimage resource and this data source to reference the same build. This data source is experimental and may change or be removed at any time without prior notice.
 ---
 
 # packer_build (Data Source)
 
-Waits for the build specified by its name to finish. This is only useful when you define the name outside of the packer_image resource, allowing both the packer_image resource and this data source to reference the same build. Use this if you want to have the image created before recreating a VM when recreation involves deletion in which case the downtime would include the image build process.
+[Experimental] Waits for the build specified by its name to finish. This is only useful when you define the name outside of the packer_image resource, allowing both the packer_image resource and this data source to reference the same build. This data source is experimental and may change or be removed at any time without prior notice.
 
 
 
