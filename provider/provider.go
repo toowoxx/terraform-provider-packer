@@ -33,7 +33,7 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 	}, nil
 }
 
-func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
+func (p *provider) Configure(_ context.Context, _ tfsdk.ConfigureProviderRequest, _ *tfsdk.ConfigureProviderResponse) {
 	exe, _ := os.Executable()
 	err := cmds.RunCommandWithEnv(exe, map[string]string{packer_interop.TPPRunPacker: "true"}, "version")
 	if err != nil {

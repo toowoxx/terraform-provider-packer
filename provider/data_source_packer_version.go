@@ -29,7 +29,7 @@ func (r dataSourceVersionType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 	}, nil
 }
 
-func (r dataSourceVersionType) NewDataSource(ctx context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+func (r dataSourceVersionType) NewDataSource(_ context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
 	return dataSourceVersion{
 		p: *(p.(*provider)),
 	}, nil
@@ -39,7 +39,7 @@ type dataSourceVersion struct {
 	p provider
 }
 
-func (r dataSourceVersion) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
+func (r dataSourceVersion) Read(ctx context.Context, _ tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
 	resourceState := dataSourceVersionType{}
 	exe, _ := os.Executable()
 	output, err := cmds.RunCommandWithEnvReturnOutput(

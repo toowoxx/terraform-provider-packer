@@ -18,7 +18,7 @@ data "packer_files" "files2" {
 }
 
 resource "packer_image" "image1" {
-  file = data.packer_files.files1.file
+  file      = data.packer_files.files1.file
   variables = {
     test_var1 = "test 1"
     test_var2 = "test 2"

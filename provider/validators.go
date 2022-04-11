@@ -10,7 +10,7 @@ import (
 
 type NonEmptyStringValidator struct{}
 
-func (n NonEmptyStringValidator) Description(ctx context.Context) string {
+func (n NonEmptyStringValidator) Description(_ context.Context) string {
 	return "Checks if the given string is not empty."
 }
 

@@ -13,7 +13,7 @@ type dataSourceBuildType struct {
 	BuildUUID types.String `tfsdk:"uuid"`
 }
 
-func (d dataSourceBuild) updateAutoComputed(resourceState *dataSourceBuildType) error {
+func (d dataSourceBuild) updateAutoComputed(_ *dataSourceBuildType) error {
 	return nil
 }
 
