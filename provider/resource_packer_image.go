@@ -17,17 +17,17 @@ import (
 )
 
 type resourceImageType struct {
-	ID               types.String      `tfsdk:"id"`
-	Variables        map[string]string `tfsdk:"variables"`
-	AdditionalParams []string          `tfsdk:"additional_params"`
-	Directory        types.String      `tfsdk:"directory"`
-	File             types.String      `tfsdk:"file"`
-	Environment      map[string]string `tfsdk:"environment"`
-	KeepEnvironment  types.Bool        `tfsdk:"keep_environment"`
-	Triggers         map[string]string `tfsdk:"triggers"`
-	Force            types.Bool        `tfsdk:"force"`
-	BuildUUID        types.String      `tfsdk:"build_uuid"`
-	Name             types.String      `tfsdk:"name"`
+	ID                types.String      `tfsdk:"id"`
+	Variables         map[string]string `tfsdk:"variables"`
+	AdditionalParams  []string          `tfsdk:"additional_params"`
+	Directory         types.String      `tfsdk:"directory"`
+	File              types.String      `tfsdk:"file"`
+	Environment       map[string]string `tfsdk:"environment"`
+	IgnoreEnvironment types.Bool        `tfsdk:"ignore_environment"`
+	Triggers          map[string]string `tfsdk:"triggers"`
+	Force             types.Bool        `tfsdk:"force"`
+	BuildUUID         types.String      `tfsdk:"build_uuid"`
+	Name              types.String      `tfsdk:"name"`
 }
 
 func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
@@ -72,8 +72,8 @@ func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Type:        types.MapType{ElemType: types.StringType},
 				Optional:    true,
 			},
-			"keep_environment": {
-				Description: "Passes all environment variables of the provider through to Packer",
+			"ignore_environment": {
+				Description: "Prevents passing all environment variables of the provider through to Packer",
 				Type:        types.BoolType,
 				Optional:    true,
 			},
@@ -122,7 +122,7 @@ func (r resourceImage) getFileParam(resourceState *resourceImageType) string {
 }
 
 func (r resourceImage) packerInit(resourceState *resourceImageType) error {
-	envVars := packer_interop.EnvVars(resourceState.Environment, resourceState.KeepEnvironment.Value)
+	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.Value)
 
 	params := []string{"init"}
 	params = append(params, r.getFileParam(resourceState))
@@ -138,7 +138,7 @@ func (r resourceImage) packerInit(resourceState *resourceImageType) error {
 }
 
 func (r resourceImage) packerBuild(resourceState *resourceImageType) error {
-	envVars := packer_interop.EnvVars(resourceState.Environment, resourceState.KeepEnvironment.Value)
+	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.Value)
 
 	params := []string{"build"}
 	for key, value := range resourceState.Variables {
