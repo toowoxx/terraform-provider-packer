@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 
+	"terraform-provider-packer/packer_interop"
 	"terraform-provider-packer/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -15,7 +16,7 @@ import (
 )
 
 func main() {
-	if os.Getenv("TPP_RUN_PACKER") == "true" {
+	if os.Getenv(packer_interop.TPPRunPacker) == "true" {
 		os.Exit(packer.Main(os.Args[1:]))
 	} else {
 		if err := tfsdk.Serve(context.Background(), provider.New, tfsdk.ServeOpts{
