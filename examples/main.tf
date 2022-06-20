@@ -18,7 +18,7 @@ data "packer_files" "files2" {
 }
 
 resource "packer_image" "image1" {
-  file      = data.packer_files.files1.file
+  file = data.packer_files.files1.file
   variables = {
     test_var1 = "test 1"
     test_var2 = "test 2"
@@ -44,8 +44,8 @@ resource "packer_image" "image2" {
   variables = {
     test_var3 = "test 3"
   }
-  keep_environment = true
-  name             = random_string.random.result
+  ignore_environment = false
+  name               = random_string.random.result
 
   triggers = {
     packer_version = data.packer_version.version.version
