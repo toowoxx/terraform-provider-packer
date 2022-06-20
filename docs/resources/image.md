@@ -22,7 +22,7 @@ description: |-
 - `environment` (Map of String) Environment variables
 - `file` (String) Packer file to use for building
 - `force` (Boolean) Force overwriting existing images
-- `keep_environment` (Boolean) Passes all environment variables of the provider through to Packer
+- `ignore_environment` (Boolean) Prevents passing all environment variables of the provider through to Packer
 - `name` (String) Name of this build. Mainly used for data source packer_build
 - `triggers` (Map of String) Values that, when changed, trigger an update of this resource
 - `variables` (Map of String) Variables to pass to Packer
