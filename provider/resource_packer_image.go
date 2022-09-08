@@ -42,7 +42,7 @@ func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 				Computed: true,
 			},
 			"name": {
-				Description: "Name of this build. Mainly used for data source packer_build",
+				Description: "Name of this build. This value is not passed to Packer.",
 				Type:        types.StringType,
 				Optional:    true,
 			},
