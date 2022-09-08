@@ -6,6 +6,9 @@ import (
 
 	"terraform-provider-packer/crypto_util"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+
 	"github.com/pkg/errors"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -77,17 +80,17 @@ func (d dataSourceFilesType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 	}, nil
 }
 
-func (d dataSourceFilesType) NewDataSource(_ context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+func (d dataSourceFilesType) NewDataSource(_ context.Context, p provider.Provider) (datasource.DataSource, diag.Diagnostics) {
 	return dataSourceFiles{
-		p: *(p.(*provider)),
+		p: *(p.(*tfProvider)),
 	}, nil
 }
 
 type dataSourceFiles struct {
-	p provider
+	p tfProvider
 }
 
-func (d dataSourceFiles) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
+func (d dataSourceFiles) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	resourceState := dataSourceFilesType{}
 	diags := req.Config.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)

@@ -1,12 +1,12 @@
 module terraform-provider-packer
 
-go 1.17
+go 1.18
 
 require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/packer v1.8.3
-	github.com/hashicorp/terraform-plugin-framework v0.9.0
-	github.com/hashicorp/terraform-plugin-go v0.9.1
+	github.com/hashicorp/terraform-plugin-framework v0.11.1
+	github.com/hashicorp/terraform-plugin-go v0.14.0
 	github.com/pkg/errors v0.9.1
 	github.com/toowoxx/go-lib-userspace-common v0.11.0
 )
@@ -88,7 +88,6 @@ require (
 	github.com/go-openapi/strfmt v0.20.0 // indirect
 	github.com/go-openapi/swag v0.19.14 // indirect
 	github.com/go-openapi/validate v0.20.2 // indirect
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
 	github.com/go-resty/resty/v2 v2.6.0 // indirect
 	github.com/go-stack/stack v1.8.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
@@ -142,7 +141,6 @@ require (
 	github.com/hashicorp/packer-plugin-chef v1.0.2 // indirect
 	github.com/hashicorp/packer-plugin-cloudstack v1.0.1 // indirect
 	github.com/hashicorp/packer-plugin-converge v1.0.1 // indirect
-	github.com/hashicorp/packer-plugin-digitalocean v1.0.6 // indirect
 	github.com/hashicorp/packer-plugin-docker v1.0.7 // indirect
 	github.com/hashicorp/packer-plugin-googlecompute v1.0.14 // indirect
 	github.com/hashicorp/packer-plugin-hcloud v1.0.4 // indirect
@@ -157,7 +155,6 @@ require (
 	github.com/hashicorp/packer-plugin-oneandone v1.0.1 // indirect
 	github.com/hashicorp/packer-plugin-openstack v1.0.1 // indirect
 	github.com/hashicorp/packer-plugin-oracle v1.0.2 // indirect
-	github.com/hashicorp/packer-plugin-outscale v1.0.2 // indirect
 	github.com/hashicorp/packer-plugin-parallels v1.0.3 // indirect
 	github.com/hashicorp/packer-plugin-profitbricks v1.0.2 // indirect
 	github.com/hashicorp/packer-plugin-proxmox v1.0.8 // indirect
@@ -174,8 +171,8 @@ require (
 	github.com/hashicorp/packer-plugin-vsphere v1.0.7 // indirect
 	github.com/hashicorp/packer-plugin-yandex v1.1.2 // indirect
 	github.com/hashicorp/serf v0.9.5 // indirect
-	github.com/hashicorp/terraform-plugin-log v0.4.1 // indirect
-	github.com/hashicorp/terraform-registry-address v0.0.0-20210412075316-9b2996cce896 // indirect
+	github.com/hashicorp/terraform-plugin-log v0.7.0 // indirect
+	github.com/hashicorp/terraform-registry-address v0.0.0-20220623143253-7d51757b572c // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
 	github.com/hashicorp/vault/api v1.1.1 // indirect
 	github.com/hashicorp/vault/sdk v0.2.1 // indirect
@@ -221,7 +218,6 @@ require (
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/oracle/oci-go-sdk/v36 v36.2.0 // indirect
-	github.com/outscale/osc-sdk-go v1.11.2 // indirect
 	github.com/packer-community/winrmcp v0.0.0-20180921211025-c76d91c1e7db // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/sftp v1.13.2 // indirect
@@ -233,8 +229,6 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/scaleway/packer-plugin-scaleway v1.0.4 // indirect
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.7 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/sirupsen/logrus v1.6.0 // indirect
@@ -269,8 +263,8 @@ require (
 	google.golang.org/api v0.58.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20211021150943-2b146023228c // indirect
-	google.golang.org/grpc v1.46.0 // indirect
-	google.golang.org/protobuf v1.28.0 // indirect
+	google.golang.org/grpc v1.48.0 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/square/go-jose.v2 v2.6.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

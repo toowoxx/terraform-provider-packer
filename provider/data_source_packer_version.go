@@ -7,6 +7,9 @@ import (
 
 	"terraform-provider-packer/packer_interop"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -29,17 +32,17 @@ func (r dataSourceVersionType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 	}, nil
 }
 
-func (r dataSourceVersionType) NewDataSource(_ context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+func (r dataSourceVersionType) NewDataSource(_ context.Context, p provider.Provider) (datasource.DataSource, diag.Diagnostics) {
 	return dataSourceVersion{
-		p: *(p.(*provider)),
+		p: *(p.(*tfProvider)),
 	}, nil
 }
 
 type dataSourceVersion struct {
-	p provider
+	p tfProvider
 }
 
-func (r dataSourceVersion) Read(ctx context.Context, _ tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
+func (r dataSourceVersion) Read(ctx context.Context, _ datasource.ReadRequest, resp *datasource.ReadResponse) {
 	resourceState := dataSourceVersionType{}
 	exe, _ := os.Executable()
 	output, err := cmds.RunCommandWithEnvReturnOutput(

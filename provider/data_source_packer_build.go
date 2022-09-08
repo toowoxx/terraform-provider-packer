@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -41,17 +43,17 @@ func (d dataSourceBuildType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 	}, nil
 }
 
-func (d dataSourceBuildType) NewDataSource(_ context.Context, p tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+func (d dataSourceBuildType) NewDataSource(_ context.Context, p provider.Provider) (datasource.DataSource, diag.Diagnostics) {
 	return dataSourceBuild{
-		p: *(p.(*provider)),
+		p: *(p.(*tfProvider)),
 	}, nil
 }
 
 type dataSourceBuild struct {
-	p provider
+	p tfProvider
 }
 
-func (d dataSourceBuild) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
+func (d dataSourceBuild) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	resourceState := dataSourceBuildType{}
 	diags := req.Config.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)

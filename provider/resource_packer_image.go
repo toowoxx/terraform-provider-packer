@@ -6,6 +6,11 @@ import (
 
 	"terraform-provider-packer/packer_interop"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
+
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+
 	"github.com/pkg/errors"
 	"github.com/toowoxx/go-lib-userspace-common/cmds"
 
@@ -13,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type resourceImageType struct {
@@ -91,18 +95,18 @@ func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diag
 	}, nil
 }
 
-func (r resourceImageType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r resourceImageType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return resourceImage{
-		p: *(p.(*provider)),
+		p: *(p.(*tfProvider)),
 	}, nil
 }
 
 type resourceImage struct {
-	p provider
+	p tfProvider
 }
 
-func (r resourceImage) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
+func (r resourceImage) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Empty().AtName("id"), req, resp)
 }
 
 func (r resourceImage) getDir(dir types.String) string {
@@ -168,7 +172,7 @@ func (r resourceImage) updateState(resourceState *resourceImageType) error {
 	return nil
 }
 
-func (r resourceImage) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	resourceState := resourceImageType{}
 	diags := req.Config.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
@@ -207,7 +211,7 @@ func (r resourceImage) Create(ctx context.Context, req tfsdk.CreateResourceReque
 	}
 }
 
-func (r resourceImage) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (r resourceImage) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var resourceState resourceImageType
 	diags := req.State.Get(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
@@ -226,7 +230,7 @@ func (r resourceImage) Read(ctx context.Context, req tfsdk.ReadResourceRequest, 
 	}
 }
 
-func (r resourceImage) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan resourceImageType
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
@@ -272,7 +276,7 @@ func (r resourceImage) Update(ctx context.Context, req tfsdk.UpdateResourceReque
 	}
 }
 
-func (r resourceImage) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r resourceImage) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state resourceImageType
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
