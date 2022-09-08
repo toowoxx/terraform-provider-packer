@@ -6,7 +6,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/packer v1.8.3
 	github.com/hashicorp/terraform-plugin-framework v0.11.1
-	github.com/hashicorp/terraform-plugin-go v0.14.0
 	github.com/pkg/errors v0.9.1
 	github.com/toowoxx/go-lib-userspace-common v0.11.0
 )
@@ -171,6 +170,7 @@ require (
 	github.com/hashicorp/packer-plugin-vsphere v1.0.7 // indirect
 	github.com/hashicorp/packer-plugin-yandex v1.1.2 // indirect
 	github.com/hashicorp/serf v0.9.5 // indirect
+	github.com/hashicorp/terraform-plugin-go v0.14.0 // indirect
 	github.com/hashicorp/terraform-plugin-log v0.7.0 // indirect
 	github.com/hashicorp/terraform-registry-address v0.0.0-20220623143253-7d51757b572c // indirect
 	github.com/hashicorp/terraform-svchost v0.0.0-20200729002733-f050f53b9734 // indirect
