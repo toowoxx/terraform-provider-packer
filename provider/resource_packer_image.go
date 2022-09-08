@@ -180,11 +180,6 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	if err := state.StartBuild(&resourceState); err != nil {
-		resp.Diagnostics.AddError("Failed to mark build as started", err.Error())
-		return
-	}
-
 	err := r.packerInit(&resourceState)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
@@ -201,9 +196,6 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	state.RefreshBuildData(&resourceState)
-	state.CompleteBuild(resourceState.Name.Value, true)
-
 	diags = resp.State.Set(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -217,10 +209,6 @@ func (r resourceImage) Read(ctx context.Context, req resource.ReadRequest, resp 
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	if !resourceState.Name.Null {
-		state.RefreshBuildData(&resourceState)
 	}
 
 	diags = resp.State.Set(ctx, &resourceState)
@@ -245,11 +233,6 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	if err := state.StartBuild(&resourceState); err != nil {
-		resp.Diagnostics.AddError("Failed to mark build as started", err.Error())
-		return
-	}
-
 	err := r.packerInit(&plan)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
@@ -265,9 +248,6 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
-
-	state.RefreshBuildData(&plan)
-	state.CompleteBuild(resourceState.Name.Value, true)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)

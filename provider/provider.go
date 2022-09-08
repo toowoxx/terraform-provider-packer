@@ -54,6 +54,5 @@ func (p *tfProvider) GetDataSources(_ context.Context) (map[string]provider.Data
 	return map[string]provider.DataSourceType{
 		"packer_version": dataSourceVersionType{},
 		"packer_files":   dataSourceFilesType{},
-		"packer_build":   dataSourceBuildType{},
 	}, nil
 }

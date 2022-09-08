@@ -53,10 +53,6 @@ resource "packer_image" "image2" {
   }
 }
 
-data "packer_build" "image2_wait" {
-  name = random_string.random.result
-}
-
 output "packer_version" {
   value = data.packer_version.version.version
 }
@@ -67,10 +63,6 @@ output "build_uuid_1" {
 
 output "build_uuid_2" {
   value = resource.packer_image.image2.build_uuid
-}
-
-output "build_wait_uuid_2" {
-  value = data.packer_build.image2_wait.uuid
 }
 
 output "file_hash_1" {
