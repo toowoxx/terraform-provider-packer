@@ -40,7 +40,3 @@ The remote state does not affect this provider's ability to function. If you del
 ## License
 
 [Mozilla Public License v2.0](LICENSE)
-
-
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftoowoxx%2Fterraform-provider-packer.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftoowoxx%2Fterraform-provider-packer?ref=badge_large)
