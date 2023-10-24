@@ -70,7 +70,8 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:    true,
 				},
 				"additional_params": schema.SetAttribute{
-					Description: "Additional parameters to pass to Packer",
+					Description: "Additional parameters to pass to Packer. Consult Packer documentation for details. " +
+						"Example: `additional_params = [\"-parallel-builds=1\"]`",
 					ElementType: types.StringType,
 					Optional:    true,
 				},
