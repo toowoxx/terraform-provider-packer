@@ -2,9 +2,14 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"os"
+	"os/exec"
 
 	"terraform-provider-packer/packer_interop"
+
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 
@@ -12,11 +17,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
 	"github.com/pkg/errors"
-	"github.com/toowoxx/go-lib-userspace-common/cmds"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -34,67 +37,6 @@ type resourceImageType struct {
 	Name              types.String      `tfsdk:"name"`
 }
 
-func (r resourceImageType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.StringType,
-				Computed: true,
-			},
-			"name": {
-				Description: "Name of this build. This value is not passed to Packer.",
-				Type:        types.StringType,
-				Optional:    true,
-			},
-			"variables": {
-				Description: "Variables to pass to Packer",
-				Type:        types.MapType{ElemType: types.StringType},
-				Optional:    true,
-			},
-			"additional_params": {
-				Description: "Additional parameters to pass to Packer",
-				Type:        types.SetType{ElemType: types.StringType},
-				Optional:    true,
-			},
-			"directory": {
-				Description: "Working directory to run Packer inside. Default is cwd.",
-				Type:        types.StringType,
-				Optional:    true,
-			},
-			"file": {
-				Description: "Packer file to use for building",
-				Type:        types.StringType,
-				Optional:    true,
-			},
-			"force": {
-				Description: "Force overwriting existing images",
-				Type:        types.BoolType,
-				Optional:    true,
-			},
-			"environment": {
-				Description: "Environment variables",
-				Type:        types.MapType{ElemType: types.StringType},
-				Optional:    true,
-			},
-			"ignore_environment": {
-				Description: "Prevents passing all environment variables of the provider through to Packer",
-				Type:        types.BoolType,
-				Optional:    true,
-			},
-			"triggers": {
-				Description: "Values that, when changed, trigger an update of this resource",
-				Type:        types.MapType{ElemType: types.StringType},
-				Optional:    true,
-			},
-			"build_uuid": {
-				Description: "UUID that is updated whenever the build has finished. This allows detecting changes.",
-				Type:        types.StringType,
-				Computed:    true,
-			},
-		},
-	}, nil
-}
-
 func (r resourceImageType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return resourceImage{
 		p: *(p.(*tfProvider)),
@@ -105,57 +47,150 @@ type resourceImage struct {
 	p tfProvider
 }
 
+func (r resourceImage) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
+	*resp = resource.MetadataResponse{
+		TypeName: "packer_image",
+	}
+}
+
+func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
+	*response = resource.SchemaResponse{
+		Schema: schema.Schema{
+			Attributes: map[string]schema.Attribute{
+				"id": schema.StringAttribute{
+					Computed: true,
+				},
+				"name": schema.StringAttribute{
+					Description: "Name of this build. This value is not passed to Packer.",
+					Optional:    true,
+				},
+				"variables": schema.MapAttribute{
+					Description: "Variables to pass to Packer",
+					ElementType: types.StringType,
+					Optional:    true,
+				},
+				"additional_params": schema.SetAttribute{
+					Description: "Additional parameters to pass to Packer",
+					ElementType: types.StringType,
+					Optional:    true,
+				},
+				"directory": schema.StringAttribute{
+					Description: "Working directory to run Packer inside. Default is cwd.",
+					Optional:    true,
+				},
+				"file": schema.StringAttribute{
+					Description: "Packer file to use for building",
+					Optional:    true,
+				},
+				"force": schema.BoolAttribute{
+					Description: "Force overwriting existing images",
+					Optional:    true,
+				},
+				"environment": schema.MapAttribute{
+					Description: "Environment variables",
+					ElementType: types.StringType,
+					Optional:    true,
+				},
+				"ignore_environment": schema.BoolAttribute{
+					Description: "Prevents passing all environment variables of the provider through to Packer",
+					Optional:    true,
+				},
+				"triggers": schema.MapAttribute{
+					Description: "Values that, when changed, trigger an update of this resource",
+					ElementType: types.StringType,
+					Optional:    true,
+				},
+				"build_uuid": schema.StringAttribute{
+					Description: "UUID that is updated whenever the build has finished. This allows detecting changes.",
+					Computed:    true,
+				},
+			},
+		},
+	}
+}
+
 func (r resourceImage) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Empty().AtName("id"), req, resp)
 }
 
 func (r resourceImage) getDir(dir types.String) string {
-	dirVal := dir.Value
-	if dir.Unknown || len(dirVal) == 0 {
+	dirVal := dir.ValueString()
+	if dir.IsUnknown() || len(dirVal) == 0 {
 		dirVal = "."
 	}
 	return dirVal
 }
 
 func (r resourceImage) getFileParam(resourceState *resourceImageType) string {
-	if resourceState.File.Null || len(resourceState.File.Value) == 0 {
+	if resourceState.File.IsNull() || len(resourceState.File.ValueString()) == 0 {
 		return "."
 	} else {
-		return resourceState.File.Value
+		return resourceState.File.ValueString()
 	}
 }
 
-func (r resourceImage) packerInit(resourceState *resourceImageType) error {
-	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.Value)
+func RunCommandInDirWithEnvReturnOutput(
+	diags *diag.Diagnostics, name string, dir string, env map[string]string, params ...string,
+) ([]byte, error) {
+	cmd := exec.Command(name, params...)
+	if dir != "." {
+		cmd.Dir = dir
+	}
+	for key, value := range env {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
+	}
+	output, err := cmd.Output()
+	if err != nil {
+		// Create a JSON of the parameters to make it crystal clear
+		// what was passed to the command.
+		paramJSON, jsonErr := json.Marshal(params)
+		if jsonErr != nil {
+			paramJSON = []byte("<could not marshal params to JSON>")
+		}
+		diags.AddWarning(
+			"Failed to run command "+cmd.String(),
+			"Env vars: "+fmt.Sprintf("%v", env)+"\n"+
+				"Dir: "+dir+"\n"+
+				"Params: "+string(paramJSON)+"\n"+
+				"Output: "+string(output)+"\n"+
+				"Error: "+err.Error()+"\n",
+		)
+		diags.AddError("Error during command", err.Error())
+	}
+	return output, err
+}
+
+func (r resourceImage) packerInit(resourceState *resourceImageType, diags *diag.Diagnostics) error {
+	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 
 	params := []string{"init"}
 	params = append(params, r.getFileParam(resourceState))
 
 	exe, _ := os.Executable()
-	output, err := cmds.RunCommandInDirWithEnvReturnOutput(exe, r.getDir(resourceState.Directory), envVars, params...)
+	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 
 	if err != nil {
-		return errors.Wrap(err, "could not run packer command; output: "+string(output))
+		return errors.Wrap(err, "could not run packer command ; output: "+string(output))
 	}
 
 	return nil
 }
 
-func (r resourceImage) packerBuild(resourceState *resourceImageType) error {
-	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.Value)
+func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag.Diagnostics) error {
+	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 
 	params := []string{"build"}
 	for key, value := range resourceState.Variables {
 		params = append(params, "-var", key+"="+value)
 	}
-	if resourceState.Force.Value {
+	if resourceState.Force.ValueBool() {
 		params = append(params, "-force")
 	}
 	params = append(params, r.getFileParam(resourceState))
 	params = append(params, resourceState.AdditionalParams...)
 
 	exe, _ := os.Executable()
-	output, err := cmds.RunCommandInDirWithEnvReturnOutput(exe, r.getDir(resourceState.Directory), envVars, params...)
+	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 	if err != nil {
 		return errors.Wrap(err, "could not run packer command; output: "+string(output))
 	}
@@ -163,11 +198,11 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType) error {
 	return nil
 }
 
-func (r resourceImage) updateState(resourceState *resourceImageType) error {
-	if resourceState.ID.Unknown {
-		resourceState.ID = types.String{Value: uuid.Must(uuid.NewRandom()).String()}
+func (r resourceImage) updateState(resourceState *resourceImageType, _ *diag.Diagnostics) error {
+	if resourceState.ID.IsUnknown() {
+		resourceState.ID = types.StringValue(uuid.Must(uuid.NewRandom()).String())
 	}
-	resourceState.BuildUUID = types.String{Value: uuid.Must(uuid.NewRandom()).String()}
+	resourceState.BuildUUID = types.StringValue(uuid.Must(uuid.NewRandom()).String())
 
 	return nil
 }
@@ -180,17 +215,17 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	err := r.packerInit(&resourceState)
+	err := r.packerInit(&resourceState, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
 		return
 	}
-	err = r.packerBuild(&resourceState)
+	err = r.packerBuild(&resourceState, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
 	}
-	err = r.updateState(&resourceState)
+	err = r.updateState(&resourceState, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
@@ -233,17 +268,17 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	err := r.packerInit(&plan)
+	err := r.packerInit(&plan, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
 		return
 	}
-	err = r.packerBuild(&plan)
+	err = r.packerBuild(&plan, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
 	}
-	err = r.updateState(&plan)
+	err = r.updateState(&plan, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return

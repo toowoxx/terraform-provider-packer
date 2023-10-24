@@ -7,12 +7,12 @@ import (
 
 	"terraform-provider-packer/packer_interop"
 
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/toowoxx/go-lib-userspace-common/cmds"
 )
 
@@ -20,16 +20,17 @@ type dataSourceVersionType struct {
 	Version string `tfsdk:"version"`
 }
 
-func (r dataSourceVersionType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"version": {
-				Description: "Version of embedded Packer",
-				Computed:    true,
-				Type:        types.StringType,
+func (r dataSourceVersion) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	*resp = datasource.SchemaResponse{
+		Schema: schema.Schema{
+			Attributes: map[string]schema.Attribute{
+				"version": schema.StringAttribute{
+					Description: "Version of embedded Packer",
+					Computed:    true,
+				},
 			},
 		},
-	}, nil
+	}
 }
 
 func (r dataSourceVersionType) NewDataSource(_ context.Context, p provider.Provider) (datasource.DataSource, diag.Diagnostics) {
@@ -40,6 +41,12 @@ func (r dataSourceVersionType) NewDataSource(_ context.Context, p provider.Provi
 
 type dataSourceVersion struct {
 	p tfProvider
+}
+
+func (r dataSourceVersion) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	*resp = datasource.MetadataResponse{
+		TypeName: "packer_version",
+	}
 }
 
 func (r dataSourceVersion) Read(ctx context.Context, _ datasource.ReadRequest, resp *datasource.ReadResponse) {

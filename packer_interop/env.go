@@ -3,6 +3,8 @@ package packer_interop
 import (
 	"os"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 func EnvVars(additionalEnvVars map[string]string, passThroughCurrent bool) map[string]string {
@@ -20,5 +22,6 @@ func EnvVars(additionalEnvVars map[string]string, passThroughCurrent bool) map[s
 		envVars[key] = value
 	}
 	envVars[TPPRunPacker] = "true"
+	envVars["PACKER_RUN_UUID"] = uuid.Must(uuid.NewRandom()).String()
 	return envVars
 }

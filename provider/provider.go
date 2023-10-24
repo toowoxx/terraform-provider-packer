@@ -6,10 +6,11 @@ import (
 
 	"terraform-provider-packer/packer_interop"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	provider_schema "github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+
 	"github.com/hashicorp/terraform-plugin-framework/provider"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/toowoxx/go-lib-userspace-common/cmds"
 )
@@ -21,17 +22,31 @@ func New() provider.Provider {
 type tfProvider struct {
 }
 
-func (p *tfProvider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"dummy": {
-				Type:        types.StringType,
-				Optional:    true,
-				Computed:    true,
-				Description: "Used as a placeholder. Do not use.",
-			},
+func (p *tfProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
+	*resp = provider.MetadataResponse{
+		TypeName: "packer",
+	}
+}
+
+func (p *tfProvider) Schema(_ context.Context, _ provider.SchemaRequest, response *provider.SchemaResponse) {
+	*response = provider.SchemaResponse{
+		Schema: provider_schema.Schema{
+			Attributes: map[string]provider_schema.Attribute{},
 		},
-	}, nil
+	}
+}
+
+func (p *tfProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		func() datasource.DataSource { return dataSourceVersion{p: *p} },
+		func() datasource.DataSource { return dataSourceFiles{p: *p} },
+	}
+}
+
+func (p *tfProvider) Resources(_ context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		func() resource.Resource { return resourceImage{p: *p} },
+	}
 }
 
 func (p *tfProvider) Configure(_ context.Context, _ provider.ConfigureRequest, _ *provider.ConfigureResponse) {
@@ -40,19 +55,4 @@ func (p *tfProvider) Configure(_ context.Context, _ provider.ConfigureRequest, _
 	if err != nil {
 		panic(err)
 	}
-}
-
-// GetResources - Defines provider resources
-func (p *tfProvider) GetResources(_ context.Context) (map[string]provider.ResourceType, diag.Diagnostics) {
-	return map[string]provider.ResourceType{
-		"packer_image": resourceImageType{},
-	}, nil
-}
-
-// GetDataSources - Defines provider data sources
-func (p *tfProvider) GetDataSources(_ context.Context) (map[string]provider.DataSourceType, diag.Diagnostics) {
-	return map[string]provider.DataSourceType{
-		"packer_version": dataSourceVersionType{},
-		"packer_files":   dataSourceFilesType{},
-	}, nil
 }
