@@ -1,5 +1,4 @@
 # Terraform Packer Provider
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ftoowoxx%2Fterraform-provider-packer.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ftoowoxx%2Fterraform-provider-packer?ref=badge_shield)
 
 
 A provider for HashiCorp Packer that has Packer embedded in it so that you can run it
