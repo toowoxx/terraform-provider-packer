@@ -186,8 +186,8 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag
 	if resourceState.Force.ValueBool() {
 		params = append(params, "-force")
 	}
-	params = append(params, r.getFileParam(resourceState))
 	params = append(params, resourceState.AdditionalParams...)
+	params = append(params, r.getFileParam(resourceState))
 
 	exe, _ := os.Executable()
 	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), envVars, params...)

@@ -46,6 +46,9 @@ resource "packer_image" "image2" {
   }
   ignore_environment = false
   name               = random_string.random.result
+  additional_params = [
+    "-parallel-builds=1"
+  ]
 
   triggers = {
     packer_version = data.packer_version.version.version
