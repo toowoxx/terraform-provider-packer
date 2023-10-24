@@ -18,5 +18,3 @@ description: |-
 ### Read-Only
 
 - `version` (String) Version of embedded Packer
-
-

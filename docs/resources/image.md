@@ -17,7 +17,7 @@ description: |-
 
 ### Optional
 
-- `additional_params` (Set of String) Additional parameters to pass to Packer
+- `additional_params` (Set of String) Additional parameters to pass to Packer. Consult Packer documentation for details. Example: `additional_params = ["-parallel-builds=1"]`
 - `directory` (String) Working directory to run Packer inside. Default is cwd.
 - `environment` (Map of String) Environment variables
 - `file` (String) Packer file to use for building
@@ -31,5 +31,3 @@ description: |-
 
 - `build_uuid` (String) UUID that is updated whenever the build has finished. This allows detecting changes.
 - `id` (String) The ID of this resource.
-
-

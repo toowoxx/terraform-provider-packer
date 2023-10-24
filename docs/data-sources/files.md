@@ -24,5 +24,3 @@ Specify files to detect changes. By default, the current directory will be used.
 ### Read-Only
 
 - `files_hash` (String) Hash of the files provided. Used for updates.
-
-
