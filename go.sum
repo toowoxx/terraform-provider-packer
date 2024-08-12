@@ -735,8 +735,8 @@ github.com/tklauser/numcpus v0.6.0 h1:kebhY2Qt+3U6RNK7UqpYNA+tJ23IBEGKkB7JQBfDYm
 github.com/tklauser/numcpus v0.6.0/go.mod h1:FEZLMke0lhOUG6w2JadTzp0a+Nl8PF/GFkQ5UVIcaL4=
 github.com/toowoxx/go-lib-userspace-common v0.12.1 h1:0HqrigUVulBLqwcEUudKrxOXvOD7w4lhWagmVToOTAY=
 github.com/toowoxx/go-lib-userspace-common v0.12.1/go.mod h1:xtrffFHlk7/H675YsYW8jkCyYwFrtMB1JzjvX9Y/hjE=
-github.com/toowoxx/packer v1.9.4-toowoxx.custom.100 h1:quSYMLfOyqo267nFla8HM5PLm9wDQepTdVd0Hh28ypo=
-github.com/toowoxx/packer v1.9.4-toowoxx.custom.100/go.mod h1:qrcVKtOwfXnsTCqSWjJpdHizFF3bak0cDq8SQHUiE+8=
+github.com/toowoxx/packer v1.10.0-toowoxx.custom.101 h1:uhA7NXH7kpqOP5D6p/i9IF6Iz/GLElwArbzoyWgss/w=
+github.com/toowoxx/packer v1.10.0-toowoxx.custom.101/go.mod h1:qrcVKtOwfXnsTCqSWjJpdHizFF3bak0cDq8SQHUiE+8=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/ugorji/go v1.2.6/go.mod h1:anCg0y61KIhDlPZmnH+so+RQbysYVyDko0IMgJv0Nn0=
 github.com/ugorji/go/codec v1.2.6 h1:7kbGefxLoDBuYXOms4yD7223OpNMMPNPZxXk5TvFcyQ=

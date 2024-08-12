@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/google/uuid v1.3.1
-	github.com/hashicorp/packer v1.9.4
+	github.com/hashicorp/packer v1.10.0
 	github.com/hashicorp/terraform-plugin-framework v1.4.1
 	github.com/pkg/errors v0.9.1
 	github.com/toowoxx/go-lib-userspace-common v0.12.1
@@ -219,7 +219,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/hashicorp/packer v1.9.4 => github.com/toowoxx/packer v1.9.4-toowoxx.custom.100
+replace github.com/hashicorp/packer v1.10.0 => github.com/toowoxx/packer v1.10.0-toowoxx.custom.101
 
 // see https://github.com/cirruslabs/packer-plugin-tart/pull/54
 // go-cty removed support for gob which is the wire protocol between packer and
