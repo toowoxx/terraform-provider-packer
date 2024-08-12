@@ -3,7 +3,9 @@ module terraform-provider-packer
 go 1.22.6
 
 require (
+	github.com/alecthomas/hcl v0.5.4
 	github.com/google/uuid v1.6.0
+	github.com/hashicorp/hcl/v2 v2.14.1
 	github.com/hashicorp/packer v1.10.0
 	github.com/hashicorp/terraform-plugin-framework v1.11.0
 	github.com/pkg/errors v0.9.1
@@ -42,6 +44,8 @@ require (
 	github.com/ProtonMail/go-crypto v0.0.0-20210428141323-04723f9f07d7 // indirect
 	github.com/acomagu/bufpipe v1.0.3 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
+	github.com/alecthomas/participle/v2 v2.0.0-beta.5 // indirect
+	github.com/alecthomas/repr v0.1.0 // indirect
 	github.com/apparentlymart/go-cidr v1.0.1 // indirect
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/armon/go-metrics v0.3.9 // indirect
@@ -118,7 +122,6 @@ require (
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hashicorp/hcl/v2 v2.14.1 // indirect
 	github.com/hashicorp/hcp-sdk-go v0.36.0 // indirect
 	github.com/hashicorp/packer-plugin-amazon v1.2.1 // indirect
 	github.com/hashicorp/packer-plugin-ansible v1.0.3 // indirect

@@ -22,6 +22,13 @@ resource "packer_image" "image1" {
   variables = {
     test_var1 = "test 1"
     test_var2 = "test 2"
+    test_int = 420
+    test_float = 3.1416
+    test_big_float = 1.234e100
+    test_bool = true
+    test_list = tolist([
+        "element 1", "element 2"
+    ])
   }
 
   triggers = {

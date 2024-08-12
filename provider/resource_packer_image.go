@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"reflect"
 
+	"terraform-provider-packer/hclconv"
 	"terraform-provider-packer/packer_interop"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -25,7 +27,7 @@ import (
 
 type resourceImageType struct {
 	ID                types.String      `tfsdk:"id"`
-	Variables         map[string]string `tfsdk:"variables"`
+	Variables         types.Dynamic     `tfsdk:"variables"`
 	AdditionalParams  []string          `tfsdk:"additional_params"`
 	Directory         types.String      `tfsdk:"directory"`
 	File              types.String      `tfsdk:"file"`
@@ -64,9 +66,8 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Description: "Name of this build. This value is not passed to Packer.",
 					Optional:    true,
 				},
-				"variables": schema.MapAttribute{
+				"variables": schema.DynamicAttribute{
 					Description: "Variables to pass to Packer",
-					ElementType: types.StringType,
 					Optional:    true,
 				},
 				"additional_params": schema.SetAttribute{
@@ -140,7 +141,7 @@ func RunCommandInDirWithEnvReturnOutput(
 	for key, value := range env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
 	}
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		// Create a JSON of the parameters to make it crystal clear
 		// what was passed to the command.
@@ -181,8 +182,36 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag
 	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 
 	params := []string{"build"}
-	for key, value := range resourceState.Variables {
-		params = append(params, "-var", key+"="+value)
+	if !resourceState.Variables.IsNull() && !resourceState.Variables.IsUnknown() &&
+		!resourceState.Variables.IsUnderlyingValueNull() && !resourceState.Variables.IsUnderlyingValueUnknown() {
+		switch value := resourceState.Variables.UnderlyingValue().(type) {
+		case types.Map:
+			for key, elementValue := range value.Elements() {
+				finalValue, err := hclconv.ConvertDynamicAttributeToString(key, elementValue)
+				if err != nil {
+					return errors.Wrap(err, fmt.Sprintf(
+						"could not convert dynamic value (%s, type %s) to string",
+						key,
+						reflect.TypeOf(elementValue).String()))
+				}
+				params = append(params, "-var", key+"="+finalValue)
+			}
+		case types.Object:
+			for key, elementValue := range value.Attributes() {
+				finalValue, err := hclconv.ConvertDynamicAttributeToString(key, elementValue)
+				if err != nil {
+					return errors.Wrap(err, fmt.Sprintf(
+						"could not convert dynamic value (%s, type %s) to string",
+						key,
+						reflect.TypeOf(elementValue).String()))
+				}
+				params = append(params, "-var", key+"="+finalValue)
+			}
+		default:
+			return errors.New(
+				"only maps and objects are supported for the variables attribute. Instead got: " +
+					reflect.TypeOf(resourceState.Variables.UnderlyingValue()).String())
+		}
 	}
 	if resourceState.Force.ValueBool() {
 		params = append(params, "-force")
