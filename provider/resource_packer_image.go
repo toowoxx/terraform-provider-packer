@@ -39,6 +39,20 @@ type resourceImageType struct {
 	Name              types.String      `tfsdk:"name"`
 }
 
+type resourceImageTypeV0 struct {
+	ID                types.String            `tfsdk:"id"`
+	Variables         map[string]types.String `tfsdk:"variables"`
+	AdditionalParams  []string                `tfsdk:"additional_params"`
+	Directory         types.String            `tfsdk:"directory"`
+	File              types.String            `tfsdk:"file"`
+	Environment       map[string]string       `tfsdk:"environment"`
+	IgnoreEnvironment types.Bool              `tfsdk:"ignore_environment"`
+	Triggers          map[string]string       `tfsdk:"triggers"`
+	Force             types.Bool              `tfsdk:"force"`
+	BuildUUID         types.String            `tfsdk:"build_uuid"`
+	Name              types.String            `tfsdk:"name"`
+}
+
 func (r resourceImageType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
 	return resourceImage{
 		p: *(p.(*tfProvider)),
@@ -106,6 +120,80 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Description: "UUID that is updated whenever the build has finished. This allows detecting changes.",
 					Computed:    true,
 				},
+			},
+			Version: 1,
+		},
+	}
+}
+
+func (r resourceImage) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed: true,
+					},
+					"name": schema.StringAttribute{
+						Optional: true,
+					},
+					"variables": schema.MapAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+					},
+					"additional_params": schema.SetAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+					},
+					"directory": schema.StringAttribute{
+						Optional: true,
+					},
+					"file": schema.StringAttribute{
+						Optional: true,
+					},
+					"force": schema.BoolAttribute{
+						Optional: true,
+					},
+					"environment": schema.MapAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+					},
+					"ignore_environment": schema.BoolAttribute{
+						Optional: true,
+					},
+					"triggers": schema.MapAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+					},
+					"build_uuid": schema.StringAttribute{
+						Computed: true,
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var priorStateData resourceImageTypeV0
+				resp.Diagnostics.Append(req.State.Get(ctx, &priorStateData)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				convertedVariables, err := types.MapValueFrom(ctx, types.StringType, priorStateData.Variables)
+				if err != nil {
+					resp.Diagnostics.Append(err.Errors()...)
+					return
+				}
+				upgradedStateData := resourceImageType{
+					Variables:         types.DynamicValue(convertedVariables),
+					AdditionalParams:  priorStateData.AdditionalParams,
+					Directory:         priorStateData.Directory,
+					File:              priorStateData.File,
+					Environment:       priorStateData.Environment,
+					IgnoreEnvironment: priorStateData.IgnoreEnvironment,
+					Triggers:          priorStateData.Triggers,
+					Force:             priorStateData.Force,
+					BuildUUID:         priorStateData.BuildUUID,
+					Name:              priorStateData.Name,
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateData)...)
 			},
 		},
 	}
