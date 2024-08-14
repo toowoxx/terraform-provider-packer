@@ -26,17 +26,18 @@ import (
 )
 
 type resourceImageType struct {
-	ID                types.String      `tfsdk:"id"`
-	Variables         types.Dynamic     `tfsdk:"variables"`
-	AdditionalParams  []string          `tfsdk:"additional_params"`
-	Directory         types.String      `tfsdk:"directory"`
-	File              types.String      `tfsdk:"file"`
-	Environment       map[string]string `tfsdk:"environment"`
-	IgnoreEnvironment types.Bool        `tfsdk:"ignore_environment"`
-	Triggers          map[string]string `tfsdk:"triggers"`
-	Force             types.Bool        `tfsdk:"force"`
-	BuildUUID         types.String      `tfsdk:"build_uuid"`
-	Name              types.String      `tfsdk:"name"`
+	ID                 types.String      `tfsdk:"id"`
+	Variables          types.Dynamic     `tfsdk:"variables"`
+	SensitiveVariables types.Dynamic     `tfsdk:"sensitive_variables"`
+	AdditionalParams   []string          `tfsdk:"additional_params"`
+	Directory          types.String      `tfsdk:"directory"`
+	File               types.String      `tfsdk:"file"`
+	Environment        map[string]string `tfsdk:"environment"`
+	IgnoreEnvironment  types.Bool        `tfsdk:"ignore_environment"`
+	Triggers           map[string]string `tfsdk:"triggers"`
+	Force              types.Bool        `tfsdk:"force"`
+	BuildUUID          types.String      `tfsdk:"build_uuid"`
+	Name               types.String      `tfsdk:"name"`
 }
 
 type resourceImageTypeV0 struct {
@@ -83,6 +84,12 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 				"variables": schema.DynamicAttribute{
 					Description: "Variables to pass to Packer",
 					Optional:    true,
+				},
+				"sensitive_variables": schema.DynamicAttribute{
+					Description: "Sensitive variables to pass to Packer " +
+						"(does the same as variables, but makes sure Terraform knows these values are sensitive)",
+					Sensitive: true,
+					Optional:  true,
 				},
 				"additional_params": schema.SetAttribute{
 					Description: "Additional parameters to pass to Packer. Consult Packer documentation for details. " +
@@ -270,37 +277,19 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag
 	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 
 	params := []string{"build"}
-	if !resourceState.Variables.IsNull() && !resourceState.Variables.IsUnknown() &&
-		!resourceState.Variables.IsUnderlyingValueNull() && !resourceState.Variables.IsUnderlyingValueUnknown() {
-		switch value := resourceState.Variables.UnderlyingValue().(type) {
-		case types.Map:
-			for key, elementValue := range value.Elements() {
-				finalValue, err := hclconv.ConvertDynamicAttributeToString(key, elementValue)
-				if err != nil {
-					return errors.Wrap(err, fmt.Sprintf(
-						"could not convert dynamic value (%s, type %s) to string",
-						key,
-						reflect.TypeOf(elementValue).String()))
-				}
-				params = append(params, "-var", key+"="+finalValue)
-			}
-		case types.Object:
-			for key, elementValue := range value.Attributes() {
-				finalValue, err := hclconv.ConvertDynamicAttributeToString(key, elementValue)
-				if err != nil {
-					return errors.Wrap(err, fmt.Sprintf(
-						"could not convert dynamic value (%s, type %s) to string",
-						key,
-						reflect.TypeOf(elementValue).String()))
-				}
-				params = append(params, "-var", key+"="+finalValue)
-			}
-		default:
-			return errors.New(
-				"only maps and objects are supported for the variables attribute. Instead got: " +
-					reflect.TypeOf(resourceState.Variables.UnderlyingValue()).String())
-		}
+
+	newParams, err := createParametersFromVariables(&resourceState.Variables)
+	if err != nil {
+		return errors.Wrap(err, "failed to create parameters from variables")
 	}
+	params = append(params, newParams...)
+
+	newParams, err = createParametersFromVariables(&resourceState.SensitiveVariables)
+	if err != nil {
+		return errors.Wrap(err, "failed to create parameters from sensitive variables")
+	}
+	params = append(params, newParams...)
+
 	if resourceState.Force.ValueBool() {
 		params = append(params, "-force")
 	}
@@ -314,6 +303,42 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag
 	}
 
 	return nil
+}
+
+func createParametersFromVariables(variables *types.Dynamic) ([]string, error) {
+	var params []string
+	if !variables.IsNull() && !variables.IsUnknown() &&
+		!variables.IsUnderlyingValueNull() && !variables.IsUnderlyingValueUnknown() {
+		switch value := variables.UnderlyingValue().(type) {
+		case types.Map:
+			for key, elementValue := range value.Elements() {
+				finalValue, err := hclconv.ConvertDynamicAttributeToString(key, elementValue)
+				if err != nil {
+					return nil, errors.Wrap(err, fmt.Sprintf(
+						"could not convert dynamic value (%s, type %s) to string",
+						key,
+						reflect.TypeOf(elementValue).String()))
+				}
+				params = append(params, "-var", key+"="+finalValue)
+			}
+		case types.Object:
+			for key, elementValue := range value.Attributes() {
+				finalValue, err := hclconv.ConvertDynamicAttributeToString(key, elementValue)
+				if err != nil {
+					return nil, errors.Wrap(err, fmt.Sprintf(
+						"could not convert dynamic value (%s, type %s) to string",
+						key,
+						reflect.TypeOf(elementValue).String()))
+				}
+				params = append(params, "-var", key+"="+finalValue)
+			}
+		default:
+			return nil, errors.New(
+				"only maps and objects are supported for the variables attribute. Instead got: " +
+					reflect.TypeOf(variables.UnderlyingValue()).String())
+		}
+	}
+	return params, nil
 }
 
 func (r resourceImage) updateState(resourceState *resourceImageType, _ *diag.Diagnostics) error {

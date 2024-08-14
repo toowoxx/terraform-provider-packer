@@ -24,10 +24,12 @@ resource "packer_image" "image1" {
     test_var2 = "test 2"
     test_int = 420
     test_float = 3.1416
+  }
+  sensitive_variables = {
     test_big_float = 1.234e100
     test_bool = true
     test_list = tolist([
-        "element 1", "element 2"
+      "element 1", "element 2"
     ])
   }
 
@@ -50,6 +52,9 @@ resource "packer_image" "image2" {
   force     = true
   variables = {
     test_var3 = "test 3"
+  }
+  sensitive_variables = {
+    test_big_float = 1.234e100
   }
   ignore_environment = false
   name               = random_string.random.result
