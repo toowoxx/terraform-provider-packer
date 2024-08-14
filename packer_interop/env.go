@@ -23,5 +23,6 @@ func EnvVars(additionalEnvVars map[string]string, passThroughCurrent bool) map[s
 	}
 	envVars[TPPRunPacker] = "true"
 	envVars["PACKER_RUN_UUID"] = uuid.Must(uuid.NewRandom()).String()
+	envVars["CHECKPOINT_DISABLE"] = "1"
 	return envVars
 }
