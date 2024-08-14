@@ -24,8 +24,9 @@ description: |-
 - `force` (Boolean) Force overwriting existing images
 - `ignore_environment` (Boolean) Prevents passing all environment variables of the provider through to Packer
 - `name` (String) Name of this build. This value is not passed to Packer.
+- `sensitive_variables` (Dynamic, Sensitive) Sensitive variables to pass to Packer (does the same as variables, but makes sure Terraform knows these values are sensitive)
 - `triggers` (Map of String) Values that, when changed, trigger an update of this resource
-- `variables` (Map of String) Variables to pass to Packer
+- `variables` (Dynamic) Variables to pass to Packer
 
 ### Read-Only
 

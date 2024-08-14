@@ -20,14 +20,14 @@ data "packer_files" "files2" {
 resource "packer_image" "image1" {
   file = data.packer_files.files1.file
   variables = {
-    test_var1 = "test 1"
-    test_var2 = "test 2"
-    test_int = 420
+    test_var1  = "test 1"
+    test_var2  = "test 2"
+    test_int   = 420
     test_float = 3.1416
   }
   sensitive_variables = {
     test_big_float = 1.234e100
-    test_bool = true
+    test_bool      = true
     test_list = tolist([
       "element 1", "element 2"
     ])
@@ -44,7 +44,7 @@ resource "random_string" "random" {
   special = false
   lower   = true
   upper   = true
-  number  = true
+  numeric = true
 }
 
 resource "packer_image" "image2" {
