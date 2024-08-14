@@ -3,6 +3,10 @@ terraform {
     packer = {
       source = "toowoxx/packer"
     }
+    random = {
+      source = "hashicorp/random"
+      version = "3.6.2"
+    }
   }
 }
 
