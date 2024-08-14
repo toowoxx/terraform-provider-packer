@@ -82,12 +82,14 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:    true,
 				},
 				"variables": schema.DynamicAttribute{
-					Description: "Variables to pass to Packer",
-					Optional:    true,
+					Description: "Variables to pass to Packer. Must be map or object. " +
+						"Can contain following types: bool, number, string, list(string), set(string).",
+					Optional: true,
 				},
 				"sensitive_variables": schema.DynamicAttribute{
 					Description: "Sensitive variables to pass to Packer " +
-						"(does the same as variables, but makes sure Terraform knows these values are sensitive)",
+						"(does the same as variables, but makes sure Terraform knows these values are sensitive). " +
+						"Can contain following types: bool, number, string, list(string), set(string).",
 					Sensitive: true,
 					Optional:  true,
 				},
@@ -110,7 +112,7 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Optional:    true,
 				},
 				"environment": schema.MapAttribute{
-					Description: "Environment variables",
+					Description: "Environment variables to pass to Packer",
 					ElementType: types.StringType,
 					Optional:    true,
 				},

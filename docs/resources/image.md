@@ -19,14 +19,14 @@ description: |-
 
 - `additional_params` (Set of String) Additional parameters to pass to Packer. Consult Packer documentation for details. Example: `additional_params = ["-parallel-builds=1"]`
 - `directory` (String) Working directory to run Packer inside. Default is cwd.
-- `environment` (Map of String) Environment variables
+- `environment` (Map of String) Environment variables to pass to Packer
 - `file` (String) Packer file to use for building
 - `force` (Boolean) Force overwriting existing images
 - `ignore_environment` (Boolean) Prevents passing all environment variables of the provider through to Packer
 - `name` (String) Name of this build. This value is not passed to Packer.
-- `sensitive_variables` (Dynamic, Sensitive) Sensitive variables to pass to Packer (does the same as variables, but makes sure Terraform knows these values are sensitive)
+- `sensitive_variables` (Dynamic, Sensitive) Sensitive variables to pass to Packer (does the same as variables, but makes sure Terraform knows these values are sensitive). Can contain following types: bool, number, string, list(string), set(string).
 - `triggers` (Map of String) Values that, when changed, trigger an update of this resource
-- `variables` (Dynamic) Variables to pass to Packer
+- `variables` (Dynamic) Variables to pass to Packer. Must be map or object. Can contain following types: bool, number, string, list(string), set(string).
 
 ### Read-Only
 

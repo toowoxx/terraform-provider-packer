@@ -4,7 +4,7 @@ terraform {
       source = "toowoxx/packer"
     }
     random = {
-      source = "hashicorp/random"
+      source  = "hashicorp/random"
       version = "3.6.2"
     }
   }
@@ -73,7 +73,7 @@ resource "packer_image" "image2" {
 }
 
 resource "packer_image" "plugins_test" {
-  file = "tests/plugins.pkr.hcl"
+  file  = "tests/plugins.pkr.hcl"
   force = true
   triggers = {
     packer_version = data.packer_version.version.version
@@ -86,9 +86,9 @@ data "packer_files" "plugins" {
 
 resource "packer_image" "plugins_dir_test" {
   directory = "tests/plugins"
-  force = true
+  force     = true
   environment = {
-    PACKER_LOG = "1"
+    PACKER_LOG      = "1"
     PACKER_LOG_PATH = "/tmp/test-plugins-dir-packer.log"
   }
   triggers = {
@@ -97,10 +97,10 @@ resource "packer_image" "plugins_dir_test" {
 }
 
 resource "packer_image" "log_output_test_17" {
-  file = "tests/17_log_output.pkr.hcl"
+  file  = "tests/17_log_output.pkr.hcl"
   force = true
   environment = {
-    PACKER_LOG = "1"
+    PACKER_LOG      = "1"
     PACKER_LOG_PATH = "/tmp/test-17-packer.log"
   }
   triggers = {
