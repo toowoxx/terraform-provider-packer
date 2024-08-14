@@ -77,6 +77,15 @@ resource "packer_image" "plugins_test" {
   force = true
 }
 
+data "packer_files" "plugins" {
+  directory = "tests/plugins"
+}
+
+resource "packer_image" "plugins_dir_test" {
+  directory = "tests/plugins"
+  force = true
+}
+
 output "packer_version" {
   value = data.packer_version.version.version
 }
