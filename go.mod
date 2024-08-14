@@ -226,7 +226,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/hashicorp/packer v1.10.0 => github.com/toowoxx/packer v1.10.0-toowoxx.custom.103
+replace github.com/hashicorp/packer v1.10.0 => github.com/toowoxx/packer v1.10.0-toowoxx.custom.104
 
 // see https://github.com/cirruslabs/packer-plugin-tart/pull/54
 // go-cty removed support for gob which is the wire protocol between packer and
