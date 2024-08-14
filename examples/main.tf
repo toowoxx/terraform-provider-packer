@@ -72,6 +72,11 @@ resource "packer_image" "image2" {
   }
 }
 
+resource "packer_image" "plugins_test" {
+  file = "tests/plugins.pkr.hcl"
+  force = true
+}
+
 output "packer_version" {
   value = data.packer_version.version.version
 }
