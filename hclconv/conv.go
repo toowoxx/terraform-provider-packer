@@ -22,8 +22,21 @@ func ConvertDynamicAttributeToString(key string, elementValue attr.Value) (strin
 		return elementValue.ValueString(), nil
 	case types.Bool:
 		return strconv.FormatBool(elementValue.ValueBool()), nil
+	case types.Int64:
+		return strconv.FormatInt(elementValue.ValueInt64(), 10), nil
+	case types.Int32:
+		return strconv.FormatInt(int64(elementValue.ValueInt32()), 10), nil
+	case types.Float64:
+		return strconv.FormatFloat(elementValue.ValueFloat64(), 'e', 4, 64), nil
+	case types.Float32:
+		return strconv.FormatFloat(float64(elementValue.ValueFloat32()), 'e', 4, 32), nil
 	case types.Number:
-		return elementValue.ValueBigFloat().Text('e', 4), nil
+		bigFloat := elementValue.ValueBigFloat()
+		if bigFloat.IsInt() {
+			return bigFloat.Text('f', 0), nil
+		} else {
+			return bigFloat.Text('e', 4), nil
+		}
 	case types.List:
 		result, err := MarshalTFListToHcl(elementValue.Elements())
 		if err != nil {
