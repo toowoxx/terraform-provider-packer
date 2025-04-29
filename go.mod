@@ -1,6 +1,6 @@
 module terraform-provider-packer
 
-go 1.22.6
+go 1.23.8
 
 require (
 	github.com/alecthomas/hcl v0.5.4
