@@ -37,3 +37,14 @@ Example: build a local binary named `terraform-provider-packer` in repo root: `g
 - Provider re-executes itself with `TPP_RUN_PACKER=true` to invoke embedded Packer; secrets should be passed via Terraform `sensitive_variables` or env.
 - Telemetry is disabled for Packer (`CHECKPOINT_DISABLE=1`); prefer least-privilege credentials during acceptance tests.
 
+## Plugin Update Process
+- Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy` (c73f61c). Update Go version as needed (b33b856).
+- Schema changes: increment resource `Schema.Version` and add `UpgradeState` upgraders (1c4c9fb, 1dda7ec). Regenerate docs (`go generate`) and commit `docs/` (1c10b61, 45a681f).
+- Features: add fields like `sensitive_variables` with proper flags and wiring (8276571), extend examples accordingly (99a7a4b, 5a1a3b8).
+- Build/release config: maintain `.goreleaser.yml` (03829af) and supported targets, e.g., add Windows arm64 (2ef56c9). Ensure CI (`.github/workflows/go.yml`) builds and tests.
+- Dev env: keep Nix flake current (`flake.nix`, `flake.lock`) for reproducible builds (38f9d8f, 3cc669b).
+
+Release checklist
+- Update code + docs, ensure `go build` and `go test` pass locally and in CI.
+- Tag and build artifacts: `git tag vX.Y.Z && git push origin vX.Y.Z` or `goreleaser release --snapshot --clean` for a dry run. Real releases sign checksums (see `.goreleaser.yml` `GPG_FINGERPRINT`).
+- Artifacts are named `terraform-provider-packer_v<version>_<os>_<arch>.zip` with checksums; publish the GitHub draft release created by GoReleaser.
