@@ -12,7 +12,8 @@
 - go build: `go build -v ./...` builds the provider locally.
 - go test: `go test -v ./...` runs tests (none yet, contributions welcome).
 - go generate: `go generate ./...` formats example Terraform and regenerates docs.
-- goreleaser (local): `goreleaser release --snapshot --clean` creates artifacts in `dist/`.
+- goreleaser (dry run): `goreleaser release --snapshot --clean` creates unsigned artifacts in `dist/`.
+- goreleaser (release): `GPG_FINGERPRINT=... GITHUB_TOKEN=... goreleaser release -p 2 --clean` publishes signed artifacts.
 - Nix dev shell (optional): `nix develop` provides Go + goreleaser tooling.
 
 Example: build a local binary named `terraform-provider-packer` in repo root: `go build -o terraform-provider-packer`.
@@ -28,6 +29,23 @@ Example: build a local binary named `terraform-provider-packer` in repo root: `g
 - Manual/acceptance: use configs in `examples/`; run `terraform init && terraform apply` with a safe target account.
 - Keep tests hermetic; avoid relying on local env unless explicitly required.
 
+## Local Testing (Dev Override)
+- Build provider in repo root: `go build -o terraform-provider-packer`.
+- Create `~/.terraform.rc` and point Terraform to it: `export TF_CLI_CONFIG_FILE=~/.terraform.rc`.
+- Example `~/.terraform.rc` to use your local build:
+  
+  ```
+  provider_installation {
+    dev_overrides {
+      "registry.terraform.io/toowoxx/packer" = "/home/youruser/dev/terraform-provider-packer"
+    }
+
+    # All other providers install from their registries as normal.
+    direct {}
+  }
+  ```
+- Then test from `examples/`: `terraform init -upgrade && terraform apply`.
+
 ## Commit & Pull Request Guidelines
 - Commits: clear, imperative subject (e.g., "Add flake", "Fix #17"), reference issues with `#` when relevant.
 - PRs: include a concise description, linked issues, and rationale; add usage notes or screenshots/logs when behavior changes.
@@ -38,7 +56,7 @@ Example: build a local binary named `terraform-provider-packer` in repo root: `g
 - Telemetry is disabled for Packer (`CHECKPOINT_DISABLE=1`); prefer least-privilege credentials during acceptance tests.
 
 ## Plugin Update Process
-- Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy` (c73f61c). Update Go version as needed (b33b856).
+- Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy -go=1.23.8` (c73f61c). Update Go version as needed (b33b856).
 - Schema changes: increment resource `Schema.Version` and add `UpgradeState` upgraders (1c4c9fb, 1dda7ec). Regenerate docs (`go generate`) and commit `docs/` (1c10b61, 45a681f).
 - Features: add fields like `sensitive_variables` with proper flags and wiring (8276571), extend examples accordingly (99a7a4b, 5a1a3b8).
 - Build/release config: maintain `.goreleaser.yml` (03829af) and supported targets, e.g., add Windows arm64 (2ef56c9). Ensure CI (`.github/workflows/go.yml`) builds and tests.
@@ -46,5 +64,7 @@ Example: build a local binary named `terraform-provider-packer` in repo root: `g
 
 Release checklist
 - Update code + docs, ensure `go build` and `go test` pass locally and in CI.
-- Tag and build artifacts: `git tag vX.Y.Z && git push origin vX.Y.Z` or `goreleaser release --snapshot --clean` for a dry run. Real releases sign checksums (see `.goreleaser.yml` `GPG_FINGERPRINT`).
+- Tag and build artifacts: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+- Dry run: `goreleaser release --snapshot --clean`.
+- Real release: `GPG_FINGERPRINT=... GITHUB_TOKEN=... goreleaser release -p 2 --clean` (signs checksum; requires envs).
 - Artifacts are named `terraform-provider-packer_v<version>_<os>_<arch>.zip` with checksums; publish the GitHub draft release created by GoReleaser.
