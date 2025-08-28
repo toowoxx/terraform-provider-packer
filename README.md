@@ -36,6 +36,18 @@ You can use the `force` attribute of resource `packer_image` to overwrite the im
 
 The remote state does not affect this provider's ability to function. If you delete an image remotely, Packer will still run and attempt to create a new one which should succeed. There is no fundamental difference between "Creation" and "Update" of a `packer_image` resource.
 
+## Custom Packer Binary
+
+If you prefer to use an external Packer binary instead of the embedded one, set the provider attribute `packer_binary` to the absolute path of your Packer executable:
+
+```
+provider "packer" {
+  packer_binary = "/usr/local/bin/packer"
+}
+```
+
+The provider validates the binary by running `packer version`. When unset, the embedded Packer is used.
+
 ## License
 
 [Mozilla Public License v2.0](LICENSE)

@@ -7,13 +7,15 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strings"
 
 	"terraform-provider-packer/hclconv"
 	"terraform-provider-packer/packer_interop"
 
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -38,6 +40,7 @@ type resourceImageType struct {
 	Force              types.Bool        `tfsdk:"force"`
 	BuildUUID          types.String      `tfsdk:"build_uuid"`
 	Name               types.String      `tfsdk:"name"`
+	PackerVersion      types.String      `tfsdk:"packer_version"`
 }
 
 type resourceImageTypeV0 struct {
@@ -68,19 +71,45 @@ type resourceImageTypeV1 struct {
 	Name              types.String      `tfsdk:"name"`
 }
 
+// Version 2 state (before introducing packer_version)
+type resourceImageTypeV2 struct {
+	ID                 types.String      `tfsdk:"id"`
+	Variables          types.Dynamic     `tfsdk:"variables"`
+	SensitiveVariables types.Dynamic     `tfsdk:"sensitive_variables"`
+	AdditionalParams   []string          `tfsdk:"additional_params"`
+	Directory          types.String      `tfsdk:"directory"`
+	File               types.String      `tfsdk:"file"`
+	Environment        map[string]string `tfsdk:"environment"`
+	IgnoreEnvironment  types.Bool        `tfsdk:"ignore_environment"`
+	Triggers           map[string]string `tfsdk:"triggers"`
+	Force              types.Bool        `tfsdk:"force"`
+	BuildUUID          types.String      `tfsdk:"build_uuid"`
+	Name               types.String      `tfsdk:"name"`
+}
+
 func (r resourceImageType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return resourceImage{
+	return &resourceImage{
 		p: *(p.(*tfProvider)),
 	}, nil
 }
 
 type resourceImage struct {
-	p tfProvider
+	p            tfProvider
+	packerBinary string
 }
 
 func (r resourceImage) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
 	*resp = resource.MetadataResponse{
 		TypeName: "packer_image",
+	}
+}
+
+func (r *resourceImage) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	if settings, ok := req.ProviderData.(providerSettings); ok {
+		r.packerBinary = settings.PackerBinary
 	}
 }
 
@@ -143,8 +172,16 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Description: "UUID that is updated whenever the build has finished. This allows detecting changes.",
 					Computed:    true,
 				},
+				"packer_version": schema.StringAttribute{
+					Description: "Detected Packer version used for this resource. Changing this forces replacement.",
+					Computed:    true,
+					PlanModifiers: []planmodifier.String{
+						stringplanmodifier.UseStateForUnknown(),
+						stringplanmodifier.RequiresReplace(),
+					},
+				},
 			},
-			Version: 2,
+			Version: 3,
 		},
 	}
 }
@@ -283,6 +320,46 @@ func (r resourceImage) UpgradeState(ctx context.Context) map[int64]resource.Stat
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgradedStateData)...)
 			},
 		},
+		2: {
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"id":                  schema.StringAttribute{Computed: true},
+					"name":                schema.StringAttribute{Optional: true},
+					"variables":           schema.DynamicAttribute{Optional: true},
+					"sensitive_variables": schema.DynamicAttribute{Optional: true, Sensitive: true},
+					"additional_params":   schema.SetAttribute{ElementType: types.StringType, Optional: true},
+					"directory":           schema.StringAttribute{Optional: true},
+					"file":                schema.StringAttribute{Optional: true},
+					"force":               schema.BoolAttribute{Optional: true},
+					"environment":         schema.MapAttribute{ElementType: types.StringType, Optional: true},
+					"ignore_environment":  schema.BoolAttribute{Optional: true},
+					"triggers":            schema.MapAttribute{ElementType: types.StringType, Optional: true},
+					"build_uuid":          schema.StringAttribute{Computed: true},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior resourceImageTypeV2
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				upgraded := resourceImageType{
+					Variables:          prior.Variables,
+					SensitiveVariables: prior.SensitiveVariables,
+					AdditionalParams:   prior.AdditionalParams,
+					Directory:          prior.Directory,
+					File:               prior.File,
+					Environment:        prior.Environment,
+					IgnoreEnvironment:  prior.IgnoreEnvironment,
+					Triggers:           prior.Triggers,
+					Force:              prior.Force,
+					BuildUUID:          prior.BuildUUID,
+					Name:               prior.Name,
+					PackerVersion:      types.StringNull(),
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgraded)...)
+			},
+		},
 	}
 }
 
@@ -343,7 +420,7 @@ func (r resourceImage) packerInit(resourceState *resourceImageType, diags *diag.
 	params := []string{"init"}
 	params = append(params, r.getFileParam(resourceState))
 
-	exe, _ := os.Executable()
+	exe := r.getPackerExecutable()
 	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 
 	if err != nil {
@@ -376,13 +453,21 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag
 	params = append(params, resourceState.AdditionalParams...)
 	params = append(params, r.getFileParam(resourceState))
 
-	exe, _ := os.Executable()
+	exe := r.getPackerExecutable()
 	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 	if err != nil {
 		return errors.Wrap(err, "could not run packer command; output: "+string(output))
 	}
 
 	return nil
+}
+
+func (r resourceImage) getPackerExecutable() string {
+	if r.packerBinary != "" {
+		return r.packerBinary
+	}
+	exe, _ := os.Executable()
+	return exe
 }
 
 func createParametersFromVariables(variables *types.Dynamic) ([]string, error) {
@@ -430,6 +515,17 @@ func (r resourceImage) updateState(resourceState *resourceImageType, _ *diag.Dia
 	return nil
 }
 
+func (r resourceImage) detectPackerVersion(resourceState *resourceImageType, diags *diag.Diagnostics) {
+	exe := r.getPackerExecutable()
+	env := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
+	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), env, "version")
+	if err != nil || len(output) == 0 {
+		return
+	}
+	v := strings.TrimPrefix(strings.TrimSpace(strings.TrimPrefix(string(output), "Packer")), "v")
+	resourceState.PackerVersion = types.StringValue(v)
+}
+
 func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	resourceState := resourceImageType{}
 	diags := req.Config.Get(ctx, &resourceState)
@@ -453,6 +549,7 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
+	r.detectPackerVersion(&resourceState, &resp.Diagnostics)
 
 	diags = resp.State.Set(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
@@ -506,6 +603,7 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
+	r.detectPackerVersion(&plan, &resp.Diagnostics)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -523,4 +621,42 @@ func (r resourceImage) Delete(ctx context.Context, req resource.DeleteRequest, r
 	}
 
 	resp.State.RemoveResource(ctx)
+}
+
+// Ensure the Resource satisfies the resource.ResourceWithModifyPlan interface.
+var _ resource.ResourceWithModifyPlan = (*resourceImage)(nil)
+
+func (r resourceImage) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	// Ignore creates/destroys
+	if req.State.Raw.IsNull() {
+		return
+	}
+
+	var prior resourceImageType
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Detect current packer version using prior state's environment and directory
+	rs := prior
+	var diagnostics diag.Diagnostics
+	r.detectPackerVersion(&rs, &diagnostics)
+	if diagnostics.HasError() {
+		// Do not force replacement on detection error; keep planning
+		return
+	}
+	oldV := ""
+	if !prior.PackerVersion.IsNull() && !prior.PackerVersion.IsUnknown() {
+		oldV = prior.PackerVersion.ValueString()
+	}
+	newV := ""
+	if !rs.PackerVersion.IsNull() && !rs.PackerVersion.IsUnknown() {
+		newV = rs.PackerVersion.ValueString()
+	}
+	if oldV != "" && newV != "" && oldV != newV {
+		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("packer_version"))
+		// Ensure the planned value is unknown to avoid inconsistent result errors
+		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("packer_version"), types.StringUnknown())...)
+	}
 }

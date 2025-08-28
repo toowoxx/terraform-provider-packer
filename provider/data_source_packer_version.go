@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 
@@ -34,13 +35,14 @@ func (r dataSourceVersion) Schema(_ context.Context, _ datasource.SchemaRequest,
 }
 
 func (r dataSourceVersionType) NewDataSource(_ context.Context, p provider.Provider) (datasource.DataSource, diag.Diagnostics) {
-	return dataSourceVersion{
+	return &dataSourceVersion{
 		p: *(p.(*tfProvider)),
 	}, nil
 }
 
 type dataSourceVersion struct {
-	p tfProvider
+	p            tfProvider
+	packerBinary string
 }
 
 func (r dataSourceVersion) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -49,15 +51,29 @@ func (r dataSourceVersion) Metadata(_ context.Context, _ datasource.MetadataRequ
 	}
 }
 
+func (r *dataSourceVersion) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	if settings, ok := req.ProviderData.(providerSettings); ok {
+		r.packerBinary = settings.PackerBinary
+	}
+}
+
 func (r dataSourceVersion) Read(ctx context.Context, _ datasource.ReadRequest, resp *datasource.ReadResponse) {
 	resourceState := dataSourceVersionType{}
-	exe, _ := os.Executable()
-	output, err := cmds.RunCommandWithEnvReturnOutput(
-		exe,
-		map[string]string{packer_interop.TPPRunPacker: "true"},
-		"version")
+	exe := r.packerBinary
+	if exe == "" {
+		exe, _ = os.Executable()
+	}
+	// Pass through current env and disable checkpoint to avoid network calls
+	env := packer_interop.EnvVars(map[string]string{}, true)
+	output, err := cmds.RunCommandWithEnvReturnOutput(exe, env, "version")
 	if err != nil {
-		resp.Diagnostics.AddError("Failed to run packer", err.Error())
+		resp.Diagnostics.AddError(
+			"Failed to run packer",
+			fmt.Sprintf("Command: %s version\nError: %v\nOutput:\n%s", exe, err, strings.TrimSpace(string(output))),
+		)
 		return
 	}
 

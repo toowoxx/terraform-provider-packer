@@ -38,8 +38,7 @@ resource "packer_image" "image1" {
   }
 
   triggers = {
-    packer_version = data.packer_version.version.version
-    files_hash     = data.packer_files.files1.files_hash
+    files_hash = data.packer_files.files1.files_hash
   }
 }
 
@@ -67,8 +66,7 @@ resource "packer_image" "image2" {
   ]
 
   triggers = {
-    packer_version = data.packer_version.version.version
-    files_hash     = data.packer_files.files2.files_hash
+    files_hash = data.packer_files.files2.files_hash
   }
 }
 

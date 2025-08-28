@@ -32,3 +32,4 @@ description: |-
 
 - `build_uuid` (String) UUID that is updated whenever the build has finished. This allows detecting changes.
 - `id` (String) The ID of this resource.
+- `packer_version` (String) Detected Packer version used for this resource. Changing this forces replacement.
