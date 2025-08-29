@@ -7,8 +7,8 @@ variable "test_big_float" {
 }
 
 source "file" "example" {
-  content =  ""
-  target =  "/dev/null"
+  content = ""
+  target  = "/dev/null"
 }
 
 build {

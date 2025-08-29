@@ -51,8 +51,8 @@ resource "random_string" "random" {
 }
 
 resource "packer_image" "image2" {
-  directory = data.packer_files.files2.directory
-  force     = true
+  directory     = data.packer_files.files2.directory
+  force         = true
   variables = {
     test_var3 = "test 3"
   }
