@@ -139,6 +139,7 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 						"(does the same as variables, but makes sure Terraform knows these values are sensitive). " +
 						"Can contain following types: bool, number, string, list(string), set(string).",
 					Sensitive: true,
+					WriteOnly: true,
 					Optional:  true,
 				},
 				"additional_params": schema.SetAttribute{
@@ -194,7 +195,7 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 					Computed:    true,
 				},
 			},
-			Version: 4,
+			Version: 5,
 		},
 	}
 }
@@ -416,6 +417,54 @@ func (r resourceImage) UpgradeState(ctx context.Context) map[int64]resource.Stat
 					PackerVersion:      prior.PackerVersion,
 					ManifestPath:       types.StringNull(),
 					Manifest:           types.DynamicNull(),
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgraded)...)
+			},
+		},
+		4: {
+			// Prior schema is the v4 schema (before write-only sensitive_variables)
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"id":                  schema.StringAttribute{Computed: true},
+					"name":                schema.StringAttribute{Optional: true},
+					"variables":           schema.DynamicAttribute{Optional: true},
+					"sensitive_variables": schema.DynamicAttribute{Optional: true, Sensitive: true},
+					"additional_params":   schema.SetAttribute{ElementType: types.StringType, Optional: true},
+					"directory":           schema.StringAttribute{Optional: true},
+					"file":                schema.StringAttribute{Optional: true},
+					"force":               schema.BoolAttribute{Optional: true},
+					"environment":         schema.MapAttribute{ElementType: types.StringType, Optional: true},
+					"ignore_environment":  schema.BoolAttribute{Optional: true},
+					"triggers":            schema.MapAttribute{ElementType: types.StringType, Optional: true},
+					"build_uuid":          schema.StringAttribute{Computed: true},
+					"packer_version":      schema.StringAttribute{Computed: true},
+					"manifest_path":       schema.StringAttribute{Optional: true},
+					"manifest":            schema.DynamicAttribute{Computed: true},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior resourceImageType
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				// Purge any persisted sensitive_variables from prior states.
+				upgraded := resourceImageType{
+					ID:                 prior.ID,
+					Variables:          prior.Variables,
+					SensitiveVariables: types.DynamicNull(),
+					AdditionalParams:   prior.AdditionalParams,
+					Directory:          prior.Directory,
+					File:               prior.File,
+					Environment:        prior.Environment,
+					IgnoreEnvironment:  prior.IgnoreEnvironment,
+					Triggers:           prior.Triggers,
+					Force:              prior.Force,
+					BuildUUID:          prior.BuildUUID,
+					Name:               prior.Name,
+					PackerVersion:      prior.PackerVersion,
+					ManifestPath:       prior.ManifestPath,
+					Manifest:           prior.Manifest,
 				}
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgraded)...)
 			},
@@ -787,6 +836,16 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// For write-only attributes (e.g., sensitive_variables), Terraform does not
+	// persist values into the plan/state. Read the config to access them during apply.
+	var cfg resourceImageType
+	diags = req.Config.Get(ctx, &cfg)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	plan.SensitiveVariables = cfg.SensitiveVariables
 
 	err := r.packerInit(&plan, &resp.Diagnostics)
 	if err != nil {

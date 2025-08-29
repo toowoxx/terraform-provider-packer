@@ -17,6 +17,8 @@ description: |-
 
 ### Optional
 
+> **NOTE**: [Write-only arguments](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments) are supported in Terraform 1.11 and later.
+
 - `additional_params` (Set of String) Additional parameters to pass to Packer. Consult Packer documentation for details. Example: `additional_params = ["-parallel-builds=1"]`
 - `directory` (String) Working directory to run Packer inside. Default is cwd.
 - `environment` (Map of String) Environment variables to pass to Packer
@@ -25,7 +27,7 @@ description: |-
 - `ignore_environment` (Boolean) Prevents passing all environment variables of the provider through to Packer
 - `manifest_path` (String) Path to the Packer manifest JSON to read after build. If set, a manifest must be written to that path. If unset, the provider passes a temporary path via environment variable TPP_MANIFEST_PATH; if Packer does not create it, the manifest remains null.
 - `name` (String) Name of this build. This value is not passed to Packer.
-- `sensitive_variables` (Dynamic, Sensitive) Sensitive variables to pass to Packer (does the same as variables, but makes sure Terraform knows these values are sensitive). Can contain following types: bool, number, string, list(string), set(string).
+- `sensitive_variables` (Dynamic, Sensitive, [Write-only](https://developer.hashicorp.com/terraform/language/resources/ephemeral#write-only-arguments)) Sensitive variables to pass to Packer (does the same as variables, but makes sure Terraform knows these values are sensitive). Can contain following types: bool, number, string, list(string), set(string).
 - `triggers` (Map of String) Values that, when changed, trigger an update of this resource
 - `variables` (Dynamic) Variables to pass to Packer. Must be map or object. Can contain following types: bool, number, string, list(string), set(string).
 
