@@ -29,6 +29,7 @@ of Packer itself.
 
 You have multiple options for managing your images:
 
+ * Use data sources and, if necessary, the manifest post-processor in Packer
  * Import state of the created image after successful deployment
  * Manually manage images, for example, by deleting them from your cloud provider or system (for example, you can delete images manually from Azure using the Azure Portal)
 
@@ -47,6 +48,7 @@ provider "packer" {
 ```
 
 The provider validates the binary by running `packer version`. When unset, the embedded Packer is used.
+Due to licensing constraints (BUSL), we are not going to be updating the embedded Packer version past the pre-BUSL commit around the 1.10.0 release.
 
 ## License
 
