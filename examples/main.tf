@@ -121,3 +121,16 @@ output "build_uuid_2" {
 output "file_hash_1" {
   value = data.packer_files.files1.files_hash
 }
+
+# Demonstrate manifest dynamic output
+output "image1_manifest_builder_type" {
+  value = resource.packer_image.image1.manifest.builds[0].builder_type
+}
+
+output "image1_manifest_last_run_uuid" {
+  value = resource.packer_image.image1.manifest.last_run_uuid
+}
+
+output "image1_manifest" {
+  value = resource.packer_image.image1.manifest
+}

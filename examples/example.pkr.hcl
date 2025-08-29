@@ -26,6 +26,10 @@ variable "test_list" {
   type = list(string)
 }
 
+variable "tpp_manifest_path" {
+  default = env("TPP_MANIFEST_PATH")
+}
+
 source "file" "example" {
   content =  ""
   target =  "/dev/null"
@@ -46,4 +50,9 @@ source "file" "var_test" {
 
 build {
   sources = ["sources.file.example", "sources.file.var_test"]
+
+  post-processor "manifest" {
+    output     = var.tpp_manifest_path
+    strip_path = true
+  }
 }

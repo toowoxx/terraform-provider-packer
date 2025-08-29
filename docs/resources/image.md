@@ -23,6 +23,7 @@ description: |-
 - `file` (String) Packer file to use for building
 - `force` (Boolean) Force overwriting existing images
 - `ignore_environment` (Boolean) Prevents passing all environment variables of the provider through to Packer
+- `manifest_path` (String) Path to the Packer manifest JSON to read after build. If set, a manifest must be written to that path. If unset, the provider passes a temporary path via environment variable TPP_MANIFEST_PATH; if Packer does not create it, the manifest remains null.
 - `name` (String) Name of this build. This value is not passed to Packer.
 - `sensitive_variables` (Dynamic, Sensitive) Sensitive variables to pass to Packer (does the same as variables, but makes sure Terraform knows these values are sensitive). Can contain following types: bool, number, string, list(string), set(string).
 - `triggers` (Map of String) Values that, when changed, trigger an update of this resource
@@ -32,4 +33,5 @@ description: |-
 
 - `build_uuid` (String) UUID that is updated whenever the build has finished. This allows detecting changes.
 - `id` (String) The ID of this resource.
+- `manifest` (Dynamic) Packer manifest content decoded as a dynamic value. Access fields directly in Terraform.
 - `packer_version` (String) Detected Packer version used for this resource. Changing this forces replacement.

@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"strings"
 
 	"terraform-provider-packer/hclconv"
 	"terraform-provider-packer/packer_interop"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -41,6 +44,8 @@ type resourceImageType struct {
 	BuildUUID          types.String      `tfsdk:"build_uuid"`
 	Name               types.String      `tfsdk:"name"`
 	PackerVersion      types.String      `tfsdk:"packer_version"`
+	ManifestPath       types.String      `tfsdk:"manifest_path"`
+	Manifest           types.Dynamic     `tfsdk:"manifest"`
 }
 
 type resourceImageTypeV0 struct {
@@ -180,8 +185,16 @@ func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, respo
 						stringplanmodifier.RequiresReplace(),
 					},
 				},
+				"manifest_path": schema.StringAttribute{
+					Description: "Path to the Packer manifest JSON to read after build. If set, a manifest must be written to that path. If unset, the provider passes a temporary path via environment variable TPP_MANIFEST_PATH; if Packer does not create it, the manifest remains null.",
+					Optional:    true,
+				},
+				"manifest": schema.DynamicAttribute{
+					Description: "Packer manifest content decoded as a dynamic value. Access fields directly in Terraform.",
+					Computed:    true,
+				},
 			},
-			Version: 3,
+			Version: 4,
 		},
 	}
 }
@@ -356,6 +369,53 @@ func (r resourceImage) UpgradeState(ctx context.Context) map[int64]resource.Stat
 					BuildUUID:          prior.BuildUUID,
 					Name:               prior.Name,
 					PackerVersion:      types.StringNull(),
+					ManifestPath:       types.StringNull(),
+					Manifest:           types.DynamicNull(),
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, upgraded)...)
+			},
+		},
+		3: {
+			// Prior schema is the v3 schema (before manifest support)
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"id":                  schema.StringAttribute{Computed: true},
+					"name":                schema.StringAttribute{Optional: true},
+					"variables":           schema.DynamicAttribute{Optional: true},
+					"sensitive_variables": schema.DynamicAttribute{Optional: true, Sensitive: true},
+					"additional_params":   schema.SetAttribute{ElementType: types.StringType, Optional: true},
+					"directory":           schema.StringAttribute{Optional: true},
+					"file":                schema.StringAttribute{Optional: true},
+					"force":               schema.BoolAttribute{Optional: true},
+					"environment":         schema.MapAttribute{ElementType: types.StringType, Optional: true},
+					"ignore_environment":  schema.BoolAttribute{Optional: true},
+					"triggers":            schema.MapAttribute{ElementType: types.StringType, Optional: true},
+					"build_uuid":          schema.StringAttribute{Computed: true},
+					"packer_version":      schema.StringAttribute{Computed: true},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var prior resourceImageType
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+				upgraded := resourceImageType{
+					ID:                 prior.ID,
+					Variables:          prior.Variables,
+					SensitiveVariables: prior.SensitiveVariables,
+					AdditionalParams:   prior.AdditionalParams,
+					Directory:          prior.Directory,
+					File:               prior.File,
+					Environment:        prior.Environment,
+					IgnoreEnvironment:  prior.IgnoreEnvironment,
+					Triggers:           prior.Triggers,
+					Force:              prior.Force,
+					BuildUUID:          prior.BuildUUID,
+					Name:               prior.Name,
+					PackerVersion:      prior.PackerVersion,
+					ManifestPath:       types.StringNull(),
+					Manifest:           types.DynamicNull(),
 				}
 				resp.Diagnostics.Append(resp.State.Set(ctx, upgraded)...)
 			},
@@ -430,8 +490,34 @@ func (r resourceImage) packerInit(resourceState *resourceImageType, diags *diag.
 	return nil
 }
 
-func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag.Diagnostics) error {
+func (r resourceImage) getManifestPath(resourceState *resourceImageType) (path string, fromUser bool, err error) {
+	// If user specified a path, use it without creating the file; ensure directory exists.
+	if !resourceState.ManifestPath.IsNull() && !resourceState.ManifestPath.IsUnknown() {
+		p := strings.TrimSpace(resourceState.ManifestPath.ValueString())
+		if p == "" {
+			return "", true, fmt.Errorf("manifest_path is empty")
+		}
+		dir := filepath.Dir(p)
+		fi, statErr := os.Stat(dir)
+		if statErr != nil {
+			return "", true, fmt.Errorf("directory for manifest_path %q does not exist: %v", p, statErr)
+		}
+		if !fi.IsDir() {
+			return "", true, fmt.Errorf("directory for manifest_path %q is not a directory", p)
+		}
+		return p, true, nil
+	}
+	// Otherwise, return a temp path (not creating the file). Use a UUID-based name.
+	rand := uuid.Must(uuid.NewRandom()).String()
+	p := filepath.Join(os.TempDir(), fmt.Sprintf("packer-manifest-%s.json", rand))
+	return p, false, nil
+}
+
+func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag.Diagnostics, manifestPath string) error {
 	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
+	if manifestPath != "" {
+		envVars[packer_interop.TPPManifestPath] = manifestPath
+	}
 
 	params := []string{"build"}
 
@@ -526,6 +612,99 @@ func (r resourceImage) detectPackerVersion(resourceState *resourceImageType, dia
 	resourceState.PackerVersion = types.StringValue(v)
 }
 
+// readManifestFromPath reads and decodes the manifest JSON into a dynamic value.
+func (r resourceImage) readManifestFromPath(path string, resourceState *resourceImageType, diags *diag.Diagnostics) error {
+	if strings.TrimSpace(path) == "" {
+		// Do not set null here to keep plan-time semantics; caller controls when to set
+		return nil
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		diags.AddError("Failed to read Packer manifest", fmt.Sprintf("Could not read manifest file %q: %v", path, err))
+		return err
+	}
+	if len(raw) == 0 {
+		diags.AddError(
+			"Empty Packer manifest",
+			fmt.Sprintf(
+				"Manifest file %q is empty. This usually means the Packer template did not configure a manifest post-processor to write to this file or produced no builds. Ensure a post-processor \"manifest\" is present and writes to the path provided via %s (e.g., a variable default = env(\"%s\") and post-processor output = var.tpp_manifest_path).",
+				path, packer_interop.TPPManifestPath, packer_interop.TPPManifestPath,
+			),
+		)
+		return fmt.Errorf("empty manifest at %s", path)
+	}
+	var decoded interface{}
+	if err := json.Unmarshal(raw, &decoded); err != nil {
+		diags.AddError("Failed to parse Packer manifest JSON", fmt.Sprintf("File %q is not valid JSON: %v", path, err))
+		return err
+	}
+	v, err := convertJSONToAttr(decoded)
+	if err != nil {
+		diags.AddError("Failed to convert manifest JSON", err.Error())
+		return err
+	}
+	resourceState.Manifest = types.DynamicValue(v)
+	return nil
+}
+
+// convertJSONToAttr converts an arbitrary decoded JSON value into a Terraform attr.Value.
+func convertJSONToAttr(v interface{}) (attr.Value, error) {
+	switch t := v.(type) {
+	case map[string]interface{}:
+		attrs := make(map[string]attr.Value, len(t))
+		typesMap := make(map[string]attr.Type, len(t))
+		for k, vv := range t {
+			if vv == nil {
+				attrs[k] = types.DynamicNull()
+				typesMap[k] = types.DynamicType
+				continue
+			}
+			av, err := convertJSONToAttr(vv)
+			if err != nil {
+				return nil, err
+			}
+			attrs[k] = av
+			typesMap[k] = av.Type(context.Background())
+		}
+		ov, diags := types.ObjectValue(typesMap, attrs)
+		if diags.HasError() {
+			return nil, fmt.Errorf("failed to build object value: %v", diags.Errors())
+		}
+		return ov, nil
+	case []interface{}:
+		elems := make([]attr.Value, 0, len(t))
+		elemTypes := make([]attr.Type, 0, len(t))
+		for _, vv := range t {
+			if vv == nil {
+				elems = append(elems, types.DynamicNull())
+				elemTypes = append(elemTypes, types.DynamicType)
+				continue
+			}
+			av, err := convertJSONToAttr(vv)
+			if err != nil {
+				return nil, err
+			}
+			elems = append(elems, av)
+			elemTypes = append(elemTypes, av.Type(context.Background()))
+		}
+		tv, diags := types.TupleValue(elemTypes, elems)
+		if diags.HasError() {
+			return nil, fmt.Errorf("failed to build tuple value: %v", diags.Errors())
+		}
+		return tv, nil
+	case string:
+		return types.StringValue(t), nil
+	case float64:
+		return types.NumberValue(big.NewFloat(t)), nil
+	case bool:
+		return types.BoolValue(t), nil
+	case nil:
+		return types.DynamicNull(), nil
+	default:
+		return nil, fmt.Errorf("unsupported JSON value type: %T", t)
+	}
+}
+
 func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	resourceState := resourceImageType{}
 	diags := req.Config.Get(ctx, &resourceState)
@@ -539,10 +718,31 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
 		return
 	}
-	err = r.packerBuild(&resourceState, &resp.Diagnostics)
+	// Generate a manifest path for this run and pass it via env
+	manifestPath, fromUser, mpErr := r.getManifestPath(&resourceState)
+	if mpErr != nil {
+		resp.Diagnostics.AddError("Failed to generate manifest path", mpErr.Error())
+		return
+	}
+
+	err = r.packerBuild(&resourceState, &resp.Diagnostics, manifestPath)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
+	}
+
+	// If user-specified path, require manifest presence; else, optional
+	if _, statErr := os.Stat(manifestPath); statErr != nil {
+		if fromUser {
+			resp.Diagnostics.AddError("Packer manifest not found", fmt.Sprintf("Expected manifest at %q but it was not created. Ensure a manifest post-processor writes to this path (env %s).", manifestPath, packer_interop.TPPManifestPath))
+			return
+		}
+		// Auto path mode: leave manifest null (user not using manifest)
+		resourceState.Manifest = types.DynamicNull()
+	} else {
+		if err := r.readManifestFromPath(manifestPath, &resourceState, &resp.Diagnostics); err != nil {
+			return
+		}
 	}
 	err = r.updateState(&resourceState, &resp.Diagnostics)
 	if err != nil {
@@ -593,10 +793,28 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
 		return
 	}
-	err = r.packerBuild(&plan, &resp.Diagnostics)
+	manifestPath, fromUser, mpErr := r.getManifestPath(&plan)
+	if mpErr != nil {
+		resp.Diagnostics.AddError("Failed to generate manifest path", mpErr.Error())
+		return
+	}
+
+	err = r.packerBuild(&plan, &resp.Diagnostics, manifestPath)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
+	}
+
+	if _, statErr := os.Stat(manifestPath); statErr != nil {
+		if fromUser {
+			resp.Diagnostics.AddError("Packer manifest not found", fmt.Sprintf("Expected manifest at %q but it was not created. Ensure a manifest post-processor writes to this path (env %s).", manifestPath, packer_interop.TPPManifestPath))
+			return
+		}
+		plan.Manifest = types.DynamicNull()
+	} else {
+		if err := r.readManifestFromPath(manifestPath, &plan, &resp.Diagnostics); err != nil {
+			return
+		}
 	}
 	err = r.updateState(&plan, &resp.Diagnostics)
 	if err != nil {
