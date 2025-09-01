@@ -26,7 +26,7 @@ func (r dataSourceVersion) Schema(_ context.Context, _ datasource.SchemaRequest,
 		Schema: schema.Schema{
 			Attributes: map[string]schema.Attribute{
 				"version": schema.StringAttribute{
-					Description: "Version of embedded Packer",
+					Description: "Packer version in use",
 					Computed:    true,
 				},
 			},
