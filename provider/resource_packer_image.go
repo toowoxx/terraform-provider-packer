@@ -904,36 +904,52 @@ func (r resourceImage) Delete(ctx context.Context, req resource.DeleteRequest, r
 var _ resource.ResourceWithModifyPlan = (*resourceImage)(nil)
 
 func (r resourceImage) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	// Ignore creates/destroys
-	if req.State.Raw.IsNull() {
-		return
-	}
+    // If this is a destroy plan, nothing to do.
+    if req.Plan.Raw.IsNull() {
+        return
+    }
 
-	var prior resourceImageType
-	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+    // Read prior state if it exists (for updates), otherwise zero value (creates)
+    var prior resourceImageType
+    if !req.State.Raw.IsNull() {
+        resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+        if resp.Diagnostics.HasError() {
+            return
+        }
+    }
 
-	// Detect current packer version using prior state's environment and directory
-	rs := prior
-	var diagnostics diag.Diagnostics
-	r.detectPackerVersion(&rs, &diagnostics)
-	if diagnostics.HasError() {
-		// Do not force replacement on detection error; keep planning
-		return
-	}
-	oldV := ""
-	if !prior.PackerVersion.IsNull() && !prior.PackerVersion.IsUnknown() {
-		oldV = prior.PackerVersion.ValueString()
-	}
-	newV := ""
-	if !rs.PackerVersion.IsNull() && !rs.PackerVersion.IsUnknown() {
-		newV = rs.PackerVersion.ValueString()
-	}
-	if oldV != "" && newV != "" && oldV != newV {
-		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("packer_version"))
-		// Ensure the planned value is unknown to avoid inconsistent result errors
-		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("packer_version"), types.StringUnknown())...)
-	}
+    // Read config to detect the Packer version that will be used during apply
+    var cfg resourceImageType
+    resp.Diagnostics.Append(req.Config.Get(ctx, &cfg)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    // Detect Packer version using config's environment and directory
+    var detectDiags diag.Diagnostics
+    r.detectPackerVersion(&cfg, &detectDiags)
+    if detectDiags.HasError() {
+        // If detection fails, do not modify the plan or force replacement
+        return
+    }
+
+    // Set the planned value to the detected version so it's not null/unknown
+    if !cfg.PackerVersion.IsNull() && !cfg.PackerVersion.IsUnknown() {
+        resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("packer_version"), cfg.PackerVersion)...)
+    }
+
+    // If updating and version changed, require replacement
+    if !req.State.Raw.IsNull() {
+        oldV := ""
+        if !prior.PackerVersion.IsNull() && !prior.PackerVersion.IsUnknown() {
+            oldV = prior.PackerVersion.ValueString()
+        }
+        newV := ""
+        if !cfg.PackerVersion.IsNull() && !cfg.PackerVersion.IsUnknown() {
+            newV = cfg.PackerVersion.ValueString()
+        }
+        if oldV != "" && newV != "" && oldV != newV {
+            resp.RequiresReplace = append(resp.RequiresReplace, path.Root("packer_version"))
+        }
+    }
 }
