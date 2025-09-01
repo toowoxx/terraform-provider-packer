@@ -909,47 +909,39 @@ func (r resourceImage) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
         return
     }
 
-    // Read prior state if it exists (for updates), otherwise zero value (creates)
-    var prior resourceImageType
-    if !req.State.Raw.IsNull() {
-        resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
-        if resp.Diagnostics.HasError() {
-            return
-        }
+    // Create: ensure packer_version is unknown to avoid null->value mismatch
+    if req.State.Raw.IsNull() {
+        resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("packer_version"), types.StringUnknown())...)
+        return
     }
 
-    // Read config to detect the Packer version that will be used during apply
+    // Update: compare prior vs detected version and force replace if different.
+    var prior resourceImageType
+    resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
     var cfg resourceImageType
     resp.Diagnostics.Append(req.Config.Get(ctx, &cfg)...)
     if resp.Diagnostics.HasError() {
         return
     }
-
-    // Detect Packer version using config's environment and directory
     var detectDiags diag.Diagnostics
     r.detectPackerVersion(&cfg, &detectDiags)
     if detectDiags.HasError() {
-        // If detection fails, do not modify the plan or force replacement
         return
     }
-
-    // Set the planned value to the detected version so it's not null/unknown
-    if !cfg.PackerVersion.IsNull() && !cfg.PackerVersion.IsUnknown() {
-        resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("packer_version"), cfg.PackerVersion)...)
+    oldV := ""
+    if !prior.PackerVersion.IsNull() && !prior.PackerVersion.IsUnknown() {
+        oldV = prior.PackerVersion.ValueString()
     }
-
-    // If updating and version changed, require replacement
-    if !req.State.Raw.IsNull() {
-        oldV := ""
-        if !prior.PackerVersion.IsNull() && !prior.PackerVersion.IsUnknown() {
-            oldV = prior.PackerVersion.ValueString()
-        }
-        newV := ""
-        if !cfg.PackerVersion.IsNull() && !cfg.PackerVersion.IsUnknown() {
-            newV = cfg.PackerVersion.ValueString()
-        }
-        if oldV != "" && newV != "" && oldV != newV {
-            resp.RequiresReplace = append(resp.RequiresReplace, path.Root("packer_version"))
-        }
+    newV := ""
+    if !cfg.PackerVersion.IsNull() && !cfg.PackerVersion.IsUnknown() {
+        newV = cfg.PackerVersion.ValueString()
+    }
+    if oldV != newV {
+        resp.RequiresReplace = append(resp.RequiresReplace, path.Root("packer_version"))
+        // Avoid inconsistent result by keeping the planned value unknown
+        resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("packer_version"), types.StringUnknown())...)
     }
 }
