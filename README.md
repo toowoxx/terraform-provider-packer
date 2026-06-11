@@ -1,8 +1,11 @@
-# Terraform Packer Provider
+# Terraform Provider for Packer
 
 
-A provider for HashiCorp Packer that has Packer embedded in it so that you can run it
+A Terraform provider for use with Packer. It has Packer embedded in it so that you can run it
 on any environment (including Terraform Cloud).
+
+This provider is an independent open source project. It is not affiliated with,
+sponsored by, or endorsed by HashiCorp. See the [Trademark Notice](#trademark-notice) below.
 
 ## Documentation
 
@@ -62,11 +65,24 @@ provider "packer" {
 `packer_binary` and `packer_binary_url` are mutually exclusive. The provider validates the binary by
 running `packer version`. When both are unset, the embedded Packer is used.
 
-This provider is an independent project and is not affiliated with or endorsed by HashiCorp.
-When you point `packer_binary_url` at a download, you are responsible for choosing a trustworthy
-source and for complying with the license of the binary it serves.
+This provider is an independent project and is not affiliated with, sponsored by, or endorsed
+by HashiCorp. When you point `packer_binary_url` at a download, you are responsible for choosing
+a trustworthy source and for complying with the license of the binary it serves. The provider
+neither distributes nor recommends any particular binary.
 
 Due to licensing constraints (BUSL), we are not going to be updating the embedded Packer version past the pre-BUSL commit around the 1.10.0 release.
+
+## Trademark Notice
+
+HashiCorp, Packer, and Terraform are trademarks or registered trademarks of HashiCorp, Inc.
+and/or its affiliates. All other trademarks are the property of their respective owners.
+
+These names are used in this project solely to identify the software the provider
+interoperates with (nominative fair use) and to follow the naming convention that the
+Terraform Registry requires for providers (`terraform-provider-<name>`). Their use does not
+imply any affiliation with, sponsorship by, or endorsement by HashiCorp. This project is
+developed and maintained independently, and no trademark rights are claimed in any of
+these names.
 
 ## License
 
