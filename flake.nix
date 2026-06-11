@@ -1,8 +1,9 @@
 {
   description = "Packer Provider";
 
-  # Nixpkgs / NixOS version to use.
-  inputs.nixpkgs.url = "nixpkgs/nixos-25.05";
+  # Nixpkgs version to use. This is not a NixOS-specific project, so we track
+  # nixpkgs-unstable instead of a NixOS release channel.
+  inputs.nixpkgs.url = "nixpkgs/nixpkgs-unstable";
 
   outputs = { self, nixpkgs }:
     let
@@ -48,7 +49,7 @@
             # remember to bump this hash when your dependencies change.
             # vendorHash = pkgs.lib.fakeHash;
 
-            vendorHash = "sha256-pQpattmS9VmO3ZIQUFn66az8GSmB4IvYhTTCFn6SUmo=";
+            vendorHash = "sha256-IVDayhTKlnLuXlRzxYj8A+T37Als6yP0wkPpsYHu/e0=";
           };
         });
 
