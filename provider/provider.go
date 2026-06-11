@@ -37,8 +37,26 @@ func (p *tfProvider) Schema(_ context.Context, _ provider.SchemaRequest, respons
 		Schema: provider_schema.Schema{
 			Attributes: map[string]provider_schema.Attribute{
 				"packer_binary": provider_schema.StringAttribute{
-					Description: "Optional path to a Packer binary to use instead of the embedded one.",
-					Optional:    true,
+					Description: "Optional path to a Packer binary to use instead of the embedded one. " +
+						"Conflicts with `packer_binary_url`.",
+					Optional: true,
+				},
+				"packer_binary_url": provider_schema.StringAttribute{
+					Description: "Optional http(s) URL to download a Packer-compatible binary from, " +
+						"used instead of the embedded one. The URL may serve a raw executable or a zip archive " +
+						"containing one (a file named `packer`/`packer.exe`, or a single-file archive). " +
+						"Downloads are cached locally and reused; changing the URL or checksum triggers a fresh download. " +
+						"Conflicts with `packer_binary`. " +
+						"This provider is an independent project and is not affiliated with or endorsed by HashiCorp. " +
+						"You are responsible for choosing a trustworthy URL and for complying with the license of " +
+						"the downloaded binary. Use `packer_binary_checksum` to verify the download.",
+					Optional: true,
+				},
+				"packer_binary_checksum": provider_schema.StringAttribute{
+					Description: "Optional SHA-256 checksum (hex, optionally prefixed with `sha256:`) used to verify " +
+						"the file downloaded from `packer_binary_url`. The checksum is computed over the downloaded " +
+						"artifact itself (e.g. the zip archive, not the binary inside it). Requires `packer_binary_url`.",
+					Optional: true,
 				},
 			},
 		},
@@ -83,10 +101,19 @@ func runCommandWithEnvCapture(bin string, env map[string]string, args ...string)
 	return cmd.CombinedOutput()
 }
 
+func knownStringValue(v types.String) string {
+	if v.IsNull() || v.IsUnknown() {
+		return ""
+	}
+	return v.ValueString()
+}
+
 func (p *tfProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	// Read provider config
 	var cfg struct {
-		PackerBinary types.String `tfsdk:"packer_binary"`
+		PackerBinary         types.String `tfsdk:"packer_binary"`
+		PackerBinaryURL      types.String `tfsdk:"packer_binary_url"`
+		PackerBinaryChecksum types.String `tfsdk:"packer_binary_checksum"`
 	}
 	diags := req.Config.Get(ctx, &cfg)
 	resp.Diagnostics.Append(diags...)
@@ -94,10 +121,39 @@ func (p *tfProvider) Configure(ctx context.Context, req provider.ConfigureReques
 		return
 	}
 
+	binPath := knownStringValue(cfg.PackerBinary)
+	binURL := knownStringValue(cfg.PackerBinaryURL)
+	checksum := knownStringValue(cfg.PackerBinaryChecksum)
+
+	if binPath != "" && binURL != "" {
+		resp.Diagnostics.AddError(
+			"Conflicting provider configuration",
+			"packer_binary and packer_binary_url are mutually exclusive. Configure at most one of them.",
+		)
+		return
+	}
+	if checksum != "" && binURL == "" {
+		resp.Diagnostics.AddError(
+			"Invalid provider configuration",
+			"packer_binary_checksum requires packer_binary_url to be set.",
+		)
+		return
+	}
+
 	// Resolve binary to use and validate
-	bin := ""
-	if !cfg.PackerBinary.IsNull() && !cfg.PackerBinary.IsUnknown() && cfg.PackerBinary.ValueString() != "" {
-		bin = cfg.PackerBinary.ValueString()
+	bin := binPath
+	if binURL != "" {
+		downloaded, err := ensureDownloadedPackerBinary(ctx, binURL, checksum)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to download Packer binary",
+				fmt.Sprintf("Could not provide a Packer binary from packer_binary_url.\nURL: %s\nError: %v", binURL, err),
+			)
+			return
+		}
+		bin = downloaded
+	}
+	if bin != "" {
 		// Validate external packer with pass-through env; do not force embedded re-exec
 		envExternal := map[string]string{"CHECKPOINT_DISABLE": "1"}
 		if out, err := runCommandWithEnvCapture(bin, envExternal, "version"); err != nil {

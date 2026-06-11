@@ -16,4 +16,6 @@ description: |-
 
 ### Optional
 
-- `packer_binary` (String) Optional path to a Packer binary to use instead of the embedded one.
+- `packer_binary` (String) Optional path to a Packer binary to use instead of the embedded one. Conflicts with `packer_binary_url`.
+- `packer_binary_checksum` (String) Optional SHA-256 checksum (hex, optionally prefixed with `sha256:`) used to verify the file downloaded from `packer_binary_url`. The checksum is computed over the downloaded artifact itself (e.g. the zip archive, not the binary inside it). Requires `packer_binary_url`.
+- `packer_binary_url` (String) Optional http(s) URL to download a Packer-compatible binary from, used instead of the embedded one. The URL may serve a raw executable or a zip archive containing one (a file named `packer`/`packer.exe`, or a single-file archive). Downloads are cached locally and reused; changing the URL or checksum triggers a fresh download. Conflicts with `packer_binary`. This provider is an independent project and is not affiliated with or endorsed by HashiCorp. You are responsible for choosing a trustworthy URL and for complying with the license of the downloaded binary. Use `packer_binary_checksum` to verify the download.

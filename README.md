@@ -47,7 +47,25 @@ provider "packer" {
 }
 ```
 
-The provider validates the binary by running `packer version`. When unset, the embedded Packer is used.
+Alternatively, set `packer_binary_url` to download a Packer-compatible binary from a URL of your choice.
+The URL may serve a raw executable or a zip archive containing one. Downloads are cached locally and
+reused; changing the URL or checksum triggers a fresh download. Use `packer_binary_checksum` to verify
+the downloaded artifact:
+
+```
+provider "packer" {
+  packer_binary_url      = "https://example.com/dist/packer_1.9.2_linux_amd64.zip"
+  packer_binary_checksum = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+}
+```
+
+`packer_binary` and `packer_binary_url` are mutually exclusive. The provider validates the binary by
+running `packer version`. When both are unset, the embedded Packer is used.
+
+This provider is an independent project and is not affiliated with or endorsed by HashiCorp.
+When you point `packer_binary_url` at a download, you are responsible for choosing a trustworthy
+source and for complying with the license of the binary it serves.
+
 Due to licensing constraints (BUSL), we are not going to be updating the embedded Packer version past the pre-BUSL commit around the 1.10.0 release.
 
 ## License
