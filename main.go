@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
@@ -18,7 +19,13 @@ import (
 
 func main() {
 	if os.Getenv(packer_interop.TPPRunPacker) == "true" {
-		os.Exit(packer.Main(os.Args[1:]))
+		args := os.Args[1:]
+		if !suppressEmbeddedPackerNotice(args) {
+			// stderr only: the provider parses the output of some
+			// Packer invocations.
+			_, _ = fmt.Fprintln(os.Stderr, embeddedPackerNotice())
+		}
+		os.Exit(packer.Main(args))
 	} else {
 		if err := providerserver.Serve(context.Background(), provider.New, providerserver.ServeOpts{
 			Address: "registry.terraform.io/toowoxx/packer",

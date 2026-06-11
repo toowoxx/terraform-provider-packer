@@ -56,7 +56,7 @@ Example: build a local binary named `terraform-provider-packer` in repo root: `g
 - Telemetry is disabled for Packer (`CHECKPOINT_DISABLE=1`); prefer least-privilege credentials during acceptance tests.
 
 ## Plugin Update Process
-- Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy -go=1.23.8` (c73f61c). Update Go version as needed (b33b856).
+- Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy -go=1.23.8` (c73f61c). Update Go version as needed (b33b856). Keep the fork tag in the "Embedded Packer" section of `README.md` in sync with the `replace` directive (the runtime notice reads it from build info automatically).
 - Schema changes: increment resource `Schema.Version` and add `UpgradeState` upgraders (1c4c9fb, 1dda7ec). Regenerate docs (`go generate`) and commit `docs/` (1c10b61, 45a681f).
 - Features: add fields like `sensitive_variables` with proper flags and wiring (8276571), extend examples accordingly (99a7a4b, 5a1a3b8).
 - Build/release config: maintain `.goreleaser.yml` (03829af) and supported targets, e.g., add Windows arm64 (2ef56c9). Ensure CI (`.github/workflows/go.yml`) builds and tests.

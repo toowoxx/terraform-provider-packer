@@ -72,6 +72,18 @@ neither distributes nor recommends any particular binary.
 
 Due to licensing constraints (BUSL), we are not going to be updating the embedded Packer version past the pre-BUSL commit around the 1.10.0 release.
 
+## Embedded Packer
+
+This provider embeds a build of Packer that is Copyright (c) HashiCorp, Inc. and
+licensed under the Mozilla Public License 2.0. The embedded build is based on upstream
+commit [`4d0a51c`](https://github.com/hashicorp/packer/commit/4d0a51c1892ea91f5eb2d5f56fabe66d729b31d2)
+(August 2023), a development commit that predates both the relicensing to BUSL and the
+1.10.0 release (it reports version `1.10.0-mpl`). The complete source code of the
+embedded build is available at [github.com/toowoxx/packer](https://github.com/toowoxx/packer),
+tag `v1.10.0-toowoxx.custom.104`.
+
+When run in embedded Packer mode, the binary prints this attribution to stderr.
+
 ## Trademark Notice
 
 HashiCorp, Packer, and Terraform are trademarks or registered trademarks of HashiCorp, Inc.
