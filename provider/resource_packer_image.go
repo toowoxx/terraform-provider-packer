@@ -510,16 +510,18 @@ func RunCommandInDirWithEnvReturnOutput(
 		if jsonErr != nil {
 			paramJSON = []byte("<could not marshal params to JSON>")
 		}
+		envVarsDetail := "<redacted; set PACKER_PROVIDER_DEBUG=true to log>"
 		if os.Getenv("PACKER_PROVIDER_DEBUG") == "true" {
-			diags.AddWarning(
-				"Failed to run command "+cmd.String(),
-				"Env vars: "+fmt.Sprintf("%v", env)+"\n"+
-					"Dir: "+dir+"\n"+
-					"Params: "+string(paramJSON)+"\n"+
-					"Output: "+string(output)+"\n"+
-					"Error: "+err.Error()+"\n",
-			)
+			envVarsDetail = fmt.Sprintf("%v", env)
 		}
+		diags.AddWarning(
+			"Failed to run command "+cmd.String(),
+			"Env vars: "+envVarsDetail+"\n"+
+				"Dir: "+dir+"\n"+
+				"Params: "+string(paramJSON)+"\n"+
+				"Output: "+string(output)+"\n"+
+				"Error: "+err.Error()+"\n",
+		)
 		diags.AddError("Error during command", err.Error())
 	}
 	return output, err
