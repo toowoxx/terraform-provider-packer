@@ -18,6 +18,17 @@ sponsored by, or endorsed by HashiCorp.
 - `packer_binary_checksum` (String) Optional SHA-256 checksum (hex, optionally prefixed with `sha256:`) used to verify the file downloaded from `packer_binary_url`. The checksum is computed over the downloaded artifact itself (e.g. the zip archive, not the binary inside it). Requires `packer_binary_url`.
 - `packer_binary_url` (String) Optional http(s) URL to download a Packer-compatible binary from, used instead of the embedded one. The URL may serve a raw executable or a zip archive containing one (a file named `packer`/`packer.exe`, or a single-file archive). Downloads are cached locally and reused; changing the URL or checksum triggers a fresh download. Conflicts with `packer_binary`. This provider is an independent project and is not affiliated with or endorsed by HashiCorp. You are responsible for choosing a trustworthy URL and for complying with the license of the downloaded binary. Use `packer_binary_checksum` to verify the download.
 
+## Debugging failed Packer runs
+
+When a Packer command fails, the provider emits a warning diagnostic containing the
+working directory, the command output and the error. The full command line, the
+environment variables and the parameters are deliberately omitted, because they can
+contain secrets such as auth tokens or sensitive variables.
+
+To inspect those details, run Terraform with debug logging enabled
+(`TF_LOG=DEBUG`, or `TF_LOG_PROVIDER=DEBUG` to limit it to providers). The command,
+environment variables and parameters are then written to the provider debug log.
+
 ## Trademark Notice
 
 HashiCorp, Packer, and Terraform are trademarks or registered trademarks of HashiCorp, Inc.

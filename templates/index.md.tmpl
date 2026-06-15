@@ -11,6 +11,17 @@ sponsored by, or endorsed by HashiCorp.
 
 {{ .SchemaMarkdown | trimspace }}
 
+## Debugging failed Packer runs
+
+When a Packer command fails, the provider emits a warning diagnostic containing the
+working directory, the command output and the error. The full command line, the
+environment variables and the parameters are deliberately omitted, because they can
+contain secrets such as auth tokens or sensitive variables.
+
+To inspect those details, run Terraform with debug logging enabled
+(`TF_LOG=DEBUG`, or `TF_LOG_PROVIDER=DEBUG` to limit it to providers). The command,
+environment variables and parameters are then written to the provider debug log.
+
 ## Trademark Notice
 
 HashiCorp, Packer, and Terraform are trademarks or registered trademarks of HashiCorp, Inc.

@@ -72,6 +72,17 @@ neither distributes nor recommends any particular binary.
 
 Due to licensing constraints (BUSL), we are not going to be updating the embedded Packer version past the pre-BUSL commit around the 1.10.0 release.
 
+## Debugging failed Packer runs
+
+When a Packer command fails, the provider emits a warning diagnostic containing the
+working directory, the command output and the error. The full command line, the
+environment variables and the parameters are deliberately omitted, because they can
+contain secrets such as auth tokens or sensitive variables.
+
+To inspect those details, run Terraform with debug logging enabled (`TF_LOG=DEBUG`, or
+`TF_LOG_PROVIDER=DEBUG` to limit it to providers). The command, environment variables and
+parameters are then written to the provider debug log.
+
 ## Embedded Packer
 
 This provider embeds a build of Packer that is Copyright (c) HashiCorp, Inc. and

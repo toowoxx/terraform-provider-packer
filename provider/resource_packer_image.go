@@ -28,6 +28,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 type resourceImageType struct {
@@ -493,7 +494,7 @@ func (r resourceImage) getFileParam(resourceState *resourceImageType) string {
 }
 
 func RunCommandInDirWithEnvReturnOutput(
-	diags *diag.Diagnostics, name string, dir string, env map[string]string, params ...string,
+	ctx context.Context, diags *diag.Diagnostics, name string, dir string, env map[string]string, params ...string,
 ) ([]byte, error) {
 	cmd := exec.Command(name, params...)
 	if dir != "." {
@@ -504,37 +505,35 @@ func RunCommandInDirWithEnvReturnOutput(
 	}
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		// Create a JSON of the parameters to make it crystal clear
-		// what was passed to the command.
-		paramJSON, jsonErr := json.Marshal(params)
-		if jsonErr != nil {
-			paramJSON = []byte("<could not marshal params to JSON>")
-		}
-		envVarsDetail := "<redacted; set PACKER_PROVIDER_DEBUG=true to log>"
-		if os.Getenv("PACKER_PROVIDER_DEBUG") == "true" {
-			envVarsDetail = fmt.Sprintf("%v", env)
-		}
+		// The full command line, environment variables and parameters can
+		// carry secrets (auth tokens, sensitive variables), so they are only
+		// emitted to the provider debug log (enable with TF_LOG=DEBUG) and
+		// kept out of the always-visible diagnostics.
+		tflog.Debug(ctx, "Packer command failed", map[string]interface{}{
+			"command": cmd.String(),
+			"env":     env,
+			"params":  params,
+		})
 		diags.AddWarning(
-			"Failed to run command "+cmd.String(),
-			"Env vars: "+envVarsDetail+"\n"+
-				"Dir: "+dir+"\n"+
-				"Params: "+string(paramJSON)+"\n"+
+			"Failed to run command "+name,
+			"Dir: "+dir+"\n"+
 				"Output: "+string(output)+"\n"+
-				"Error: "+err.Error()+"\n",
+				"Error: "+err.Error()+"\n"+
+				"Set TF_LOG=DEBUG to log the full command, environment variables and parameters.",
 		)
 		diags.AddError("Error during command", err.Error())
 	}
 	return output, err
 }
 
-func (r resourceImage) packerInit(resourceState *resourceImageType, diags *diag.Diagnostics) error {
+func (r resourceImage) packerInit(ctx context.Context, resourceState *resourceImageType, diags *diag.Diagnostics) error {
 	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 
 	params := []string{"init"}
 	params = append(params, r.getFileParam(resourceState))
 
 	exe := r.getPackerExecutable()
-	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), envVars, params...)
+	output, err := RunCommandInDirWithEnvReturnOutput(ctx, diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 
 	if err != nil {
 		return errors.Wrap(err, "could not run packer command ; output: "+string(output))
@@ -566,7 +565,7 @@ func (r resourceImage) getManifestPath(resourceState *resourceImageType) (path s
 	return p, false, nil
 }
 
-func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag.Diagnostics, manifestPath string) error {
+func (r resourceImage) packerBuild(ctx context.Context, resourceState *resourceImageType, diags *diag.Diagnostics, manifestPath string) error {
 	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 	if manifestPath != "" {
 		envVars[packer_interop.TPPManifestPath] = manifestPath
@@ -593,7 +592,7 @@ func (r resourceImage) packerBuild(resourceState *resourceImageType, diags *diag
 	params = append(params, r.getFileParam(resourceState))
 
 	exe := r.getPackerExecutable()
-	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), envVars, params...)
+	output, err := RunCommandInDirWithEnvReturnOutput(ctx, diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 	if err != nil {
 		return errors.Wrap(err, "could not run packer command; output: "+string(output))
 	}
@@ -654,10 +653,10 @@ func (r resourceImage) updateState(resourceState *resourceImageType, _ *diag.Dia
 	return nil
 }
 
-func (r resourceImage) detectPackerVersion(resourceState *resourceImageType, diags *diag.Diagnostics) {
+func (r resourceImage) detectPackerVersion(ctx context.Context, resourceState *resourceImageType, diags *diag.Diagnostics) {
 	exe := r.getPackerExecutable()
 	env := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
-	output, err := RunCommandInDirWithEnvReturnOutput(diags, exe, r.getDir(resourceState.Directory), env, "version")
+	output, err := RunCommandInDirWithEnvReturnOutput(ctx, diags, exe, r.getDir(resourceState.Directory), env, "version")
 	if err != nil || len(output) == 0 {
 		return
 	}
@@ -766,7 +765,7 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	err := r.packerInit(&resourceState, &resp.Diagnostics)
+	err := r.packerInit(ctx, &resourceState, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
 		return
@@ -778,7 +777,7 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	err = r.packerBuild(&resourceState, &resp.Diagnostics, manifestPath)
+	err = r.packerBuild(ctx, &resourceState, &resp.Diagnostics, manifestPath)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
@@ -802,7 +801,7 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
-	r.detectPackerVersion(&resourceState, &resp.Diagnostics)
+	r.detectPackerVersion(ctx, &resourceState, &resp.Diagnostics)
 
 	diags = resp.State.Set(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
@@ -851,7 +850,7 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 	plan.SensitiveVariables = cfg.SensitiveVariables
 
-	err := r.packerInit(&plan, &resp.Diagnostics)
+	err := r.packerInit(ctx, &plan, &resp.Diagnostics)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer init", err.Error())
 		return
@@ -862,7 +861,7 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	err = r.packerBuild(&plan, &resp.Diagnostics, manifestPath)
+	err = r.packerBuild(ctx, &plan, &resp.Diagnostics, manifestPath)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to run packer build", err.Error())
 		return
@@ -884,7 +883,7 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
-	r.detectPackerVersion(&plan, &resp.Diagnostics)
+	r.detectPackerVersion(ctx, &plan, &resp.Diagnostics)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -931,7 +930,7 @@ func (r resourceImage) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 		return
 	}
 	var detectDiags diag.Diagnostics
-	r.detectPackerVersion(&cfg, &detectDiags)
+	r.detectPackerVersion(ctx, &cfg, &detectDiags)
 	if detectDiags.HasError() {
 		return
 	}
