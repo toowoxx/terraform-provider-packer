@@ -33,7 +33,7 @@
 
             # Bump this whenever the Go dependencies change. Set to
             # pkgs.lib.fakeHash to have the build report the expected value.
-            vendorHash = "sha256-IVDayhTKlnLuXlRzxYj8A+T37Als6yP0wkPpsYHu/e0=";
+            vendorHash = "sha256-772gFgvQUgoAZ6Z+9ROwSxsgX/lfIAPHLfhhijUPLGY=";
           };
         });
 
