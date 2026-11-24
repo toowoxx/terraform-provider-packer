@@ -10,7 +10,7 @@
 
 ## Build, Test, and Development Commands
 - go build: `go build -v ./...` builds the provider locally.
-- go test: `go test -v ./...` runs tests (none yet, contributions welcome).
+- go test: `go test -v ./...` runs tests.
 - go generate: `go generate ./...` formats example Terraform and regenerates docs.
 - goreleaser (dry run): `goreleaser release --snapshot --clean` creates unsigned artifacts in `dist/`.
 - goreleaser (release): `GPG_FINGERPRINT=... GITHUB_TOKEN=... goreleaser release -p 2 --clean` publishes signed artifacts.
@@ -56,8 +56,8 @@ Example: build a local binary named `terraform-provider-packer` in repo root: `g
 - Telemetry is disabled for Packer (`CHECKPOINT_DISABLE=1`); prefer least-privilege credentials during acceptance tests.
 
 ## Plugin Update Process
-- Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy -go=1.23.8` (c73f61c). Update Go version as needed (b33b856). Keep the fork tag in the "Embedded Packer" section of `README.md` in sync with the `replace` directive (the runtime notice reads it from build info automatically).
-- Security pins: `github.com/hashicorp/vault/api` is required at v1.16.0, above what the embedded Packer asks for, because releases before v1.9.2 import the unmaintained `gopkg.in/square/go-jose.v2` (GHSA-c5q2-7r4c-mv6g, no fix). Keep it there; after updating the Packer fork, `go list -deps ./... | grep square/go-jose` must print nothing. `github.com/golang-jwt/jwt` v3 (imported by `packer-plugin-azure`, GHSA-mh63-6h87-95cp, no fixed v3 release) is replaced in `go.mod` by the local module `replaced-modules/golang-jwt-v3`, which forwards the used API to `jwt/v4`; remove the replace and the module once `go list -deps ./...` no longer lists `github.com/golang-jwt/jwt` (v3).
+- Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy` (c73f61c). Update Go version as needed (b33b856). Keep the fork tag in the "Embedded Packer" section of `README.md` in sync with the `replace` directive (the runtime notice reads it from build info automatically).
+- Security pins: a `require` or `replace` in `go.mod` that keeps a vulnerable module out of the build carries its reason beside it and stays through updates. The osv-scanner step in CI must pass; `osv-scanner.toml` lists only advisories without a fixed release, each with its reason.
 - Schema changes: increment resource `Schema.Version` and add `UpgradeState` upgraders (1c4c9fb, 1dda7ec). Regenerate docs (`go generate`) and commit `docs/` (1c10b61, 45a681f).
 - Features: add fields like `sensitive_variables` with proper flags and wiring (8276571), extend examples accordingly (99a7a4b, 5a1a3b8).
 - Build/release config: maintain `.goreleaser.yml` (03829af) and supported targets, e.g., add Windows arm64 (2ef56c9). Ensure CI (`.github/workflows/go.yml`) builds and tests.
