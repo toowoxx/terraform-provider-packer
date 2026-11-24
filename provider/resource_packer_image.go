@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 
 	"github.com/pkg/errors"
@@ -93,14 +92,7 @@ type resourceImageTypeV2 struct {
 	Name               types.String      `tfsdk:"name"`
 }
 
-func (r resourceImageType) NewResource(_ context.Context, p provider.Provider) (resource.Resource, diag.Diagnostics) {
-	return &resourceImage{
-		p: *(p.(*tfProvider)),
-	}, nil
-}
-
 type resourceImage struct {
-	p        tfProvider
 	settings providerSettings
 }
 

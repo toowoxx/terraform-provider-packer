@@ -6,9 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
-
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 )
 
 type dataSourceVersionType struct {
@@ -28,14 +25,7 @@ func (r dataSourceVersion) Schema(_ context.Context, _ datasource.SchemaRequest,
 	}
 }
 
-func (r dataSourceVersionType) NewDataSource(_ context.Context, p provider.Provider) (datasource.DataSource, diag.Diagnostics) {
-	return &dataSourceVersion{
-		p: *(p.(*tfProvider)),
-	}, nil
-}
-
 type dataSourceVersion struct {
-	p        tfProvider
 	settings providerSettings
 }
 

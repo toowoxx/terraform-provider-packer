@@ -62,14 +62,14 @@ func (p *tfProvider) Schema(_ context.Context, _ provider.SchemaRequest, respons
 
 func (p *tfProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		func() datasource.DataSource { return &dataSourceVersion{p: *p} },
-		func() datasource.DataSource { return &dataSourceFiles{p: *p} },
+		func() datasource.DataSource { return &dataSourceVersion{} },
+		func() datasource.DataSource { return &dataSourceFiles{} },
 	}
 }
 
 func (p *tfProvider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		func() resource.Resource { return &resourceImage{p: *p} },
+		func() resource.Resource { return &resourceImage{} },
 	}
 }
 

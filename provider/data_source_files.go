@@ -9,11 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/provider"
 
 	"github.com/pkg/errors"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -80,15 +78,7 @@ func (d dataSourceFiles) Schema(_ context.Context, _ datasource.SchemaRequest, r
 	}
 }
 
-func (d dataSourceFilesType) NewDataSource(_ context.Context, p provider.Provider) (datasource.DataSource, diag.Diagnostics) {
-	return dataSourceFiles{
-		p: *(p.(*tfProvider)),
-	}, nil
-}
-
-type dataSourceFiles struct {
-	p tfProvider
-}
+type dataSourceFiles struct{}
 
 func (d dataSourceFiles) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	*resp = datasource.MetadataResponse{
