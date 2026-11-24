@@ -57,6 +57,7 @@ Example: build a local binary named `terraform-provider-packer` in repo root: `g
 
 ## Plugin Update Process
 - Dependencies: bump Packer via `replace` in `go.mod` (0e8efff), then `go mod tidy -go=1.23.8` (c73f61c). Update Go version as needed (b33b856). Keep the fork tag in the "Embedded Packer" section of `README.md` in sync with the `replace` directive (the runtime notice reads it from build info automatically).
+- Security pins: `github.com/hashicorp/vault/api` is required at v1.16.0, above what the embedded Packer asks for, because releases before v1.9.2 import the unmaintained `gopkg.in/square/go-jose.v2` (GHSA-c5q2-7r4c-mv6g, no fix). Keep it there; after updating the Packer fork, `go list -deps ./... | grep square/go-jose` must print nothing.
 - Schema changes: increment resource `Schema.Version` and add `UpgradeState` upgraders (1c4c9fb, 1dda7ec). Regenerate docs (`go generate`) and commit `docs/` (1c10b61, 45a681f).
 - Features: add fields like `sensitive_variables` with proper flags and wiring (8276571), extend examples accordingly (99a7a4b, 5a1a3b8).
 - Build/release config: maintain `.goreleaser.yml` (03829af) and supported targets, e.g., add Windows arm64 (2ef56c9). Ensure CI (`.github/workflows/go.yml`) builds and tests.
