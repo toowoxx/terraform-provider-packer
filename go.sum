@@ -706,8 +706,6 @@ github.com/tklauser/go-sysconf v0.3.11 h1:89WgdJhk5SNwJfu+GKyYveZ4IaJ7xAkecBo+Kd
 github.com/tklauser/go-sysconf v0.3.11/go.mod h1:GqXfhXY3kiPa0nAXPDIQIWzJbMCB7AmcWpGR8lSZfqI=
 github.com/tklauser/numcpus v0.6.0 h1:kebhY2Qt+3U6RNK7UqpYNA+tJ23IBEGKkB7JQBfDYms=
 github.com/tklauser/numcpus v0.6.0/go.mod h1:FEZLMke0lhOUG6w2JadTzp0a+Nl8PF/GFkQ5UVIcaL4=
-github.com/toowoxx/go-lib-userspace-common v0.12.1 h1:0HqrigUVulBLqwcEUudKrxOXvOD7w4lhWagmVToOTAY=
-github.com/toowoxx/go-lib-userspace-common v0.12.1/go.mod h1:xtrffFHlk7/H675YsYW8jkCyYwFrtMB1JzjvX9Y/hjE=
 github.com/toowoxx/packer v1.10.0-toowoxx.custom.104 h1:4f/hQJ9TPT5eXK9oZsWdTm9PX7wkDykAgR2BTg0k94M=
 github.com/toowoxx/packer v1.10.0-toowoxx.custom.104/go.mod h1:qrcVKtOwfXnsTCqSWjJpdHizFF3bak0cDq8SQHUiE+8=
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=

@@ -100,8 +100,8 @@ func (r resourceImageType) NewResource(_ context.Context, p provider.Provider) (
 }
 
 type resourceImage struct {
-	p            tfProvider
-	packerBinary string
+	p        tfProvider
+	settings providerSettings
 }
 
 func (r resourceImage) Metadata(_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -110,13 +110,10 @@ func (r resourceImage) Metadata(_ context.Context, _ resource.MetadataRequest, r
 	}
 }
 
-func (r *resourceImage) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	if settings, ok := req.ProviderData.(providerSettings); ok {
-		r.packerBinary = settings.PackerBinary
-	}
+func (r *resourceImage) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	settings, diags := providerSettingsFrom(req.ProviderData)
+	resp.Diagnostics.Append(diags...)
+	r.settings = settings
 }
 
 func (r resourceImage) Schema(_ context.Context, _ resource.SchemaRequest, response *resource.SchemaResponse) {
@@ -500,9 +497,7 @@ func RunCommandInDirWithEnvReturnOutput(
 	if dir != "." {
 		cmd.Dir = dir
 	}
-	for key, value := range env {
-		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", key, value))
-	}
+	cmd.Env = envList(env)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		// The full command line, environment variables and parameters can
@@ -527,12 +522,12 @@ func RunCommandInDirWithEnvReturnOutput(
 }
 
 func (r resourceImage) packerInit(ctx context.Context, resourceState *resourceImageType, diags *diag.Diagnostics) error {
-	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
+	envVars := r.settings.PackerBinary.envVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 
 	params := []string{"init"}
 	params = append(params, r.getFileParam(resourceState))
 
-	exe := r.getPackerExecutable()
+	exe := r.settings.PackerBinary.Path
 	output, err := RunCommandInDirWithEnvReturnOutput(ctx, diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 
 	if err != nil {
@@ -566,7 +561,7 @@ func (r resourceImage) getManifestPath(resourceState *resourceImageType) (path s
 }
 
 func (r resourceImage) packerBuild(ctx context.Context, resourceState *resourceImageType, diags *diag.Diagnostics, manifestPath string) error {
-	envVars := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
+	envVars := r.settings.PackerBinary.envVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
 	if manifestPath != "" {
 		envVars[packer_interop.TPPManifestPath] = manifestPath
 	}
@@ -591,21 +586,13 @@ func (r resourceImage) packerBuild(ctx context.Context, resourceState *resourceI
 	params = append(params, resourceState.AdditionalParams...)
 	params = append(params, r.getFileParam(resourceState))
 
-	exe := r.getPackerExecutable()
+	exe := r.settings.PackerBinary.Path
 	output, err := RunCommandInDirWithEnvReturnOutput(ctx, diags, exe, r.getDir(resourceState.Directory), envVars, params...)
 	if err != nil {
 		return errors.Wrap(err, "could not run packer command; output: "+string(output))
 	}
 
 	return nil
-}
-
-func (r resourceImage) getPackerExecutable() string {
-	if r.packerBinary != "" {
-		return r.packerBinary
-	}
-	exe, _ := os.Executable()
-	return exe
 }
 
 func createParametersFromVariables(variables *types.Dynamic) ([]string, error) {
@@ -651,17 +638,6 @@ func (r resourceImage) updateState(resourceState *resourceImageType, _ *diag.Dia
 	resourceState.BuildUUID = types.StringValue(uuid.Must(uuid.NewRandom()).String())
 
 	return nil
-}
-
-func (r resourceImage) detectPackerVersion(ctx context.Context, resourceState *resourceImageType, diags *diag.Diagnostics) {
-	exe := r.getPackerExecutable()
-	env := packer_interop.EnvVars(resourceState.Environment, !resourceState.IgnoreEnvironment.ValueBool())
-	output, err := RunCommandInDirWithEnvReturnOutput(ctx, diags, exe, r.getDir(resourceState.Directory), env, "version")
-	if err != nil || len(output) == 0 {
-		return
-	}
-	v := strings.TrimPrefix(strings.TrimSpace(strings.TrimPrefix(string(output), "Packer")), "v")
-	resourceState.PackerVersion = types.StringValue(v)
 }
 
 // readManifestFromPath reads and decodes the manifest JSON into a dynamic value.
@@ -801,7 +777,7 @@ func (r resourceImage) Create(ctx context.Context, req resource.CreateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
-	r.detectPackerVersion(ctx, &resourceState, &resp.Diagnostics)
+	resourceState.PackerVersion = types.StringValue(r.settings.PackerVersion)
 
 	diags = resp.State.Set(ctx, &resourceState)
 	resp.Diagnostics.Append(diags...)
@@ -883,7 +859,7 @@ func (r resourceImage) Update(ctx context.Context, req resource.UpdateRequest, r
 		resp.Diagnostics.AddError("Failed to run packer", err.Error())
 		return
 	}
-	r.detectPackerVersion(ctx, &plan, &resp.Diagnostics)
+	plan.PackerVersion = types.StringValue(r.settings.PackerVersion)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -924,25 +900,11 @@ func (r resourceImage) ModifyPlan(ctx context.Context, req resource.ModifyPlanRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var cfg resourceImageType
-	resp.Diagnostics.Append(req.Config.Get(ctx, &cfg)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	var detectDiags diag.Diagnostics
-	r.detectPackerVersion(ctx, &cfg, &detectDiags)
-	if detectDiags.HasError() {
-		return
-	}
 	oldV := ""
 	if !prior.PackerVersion.IsNull() && !prior.PackerVersion.IsUnknown() {
 		oldV = prior.PackerVersion.ValueString()
 	}
-	newV := ""
-	if !cfg.PackerVersion.IsNull() && !cfg.PackerVersion.IsUnknown() {
-		newV = cfg.PackerVersion.ValueString()
-	}
-	if oldV != newV {
+	if oldV != r.settings.PackerVersion {
 		resp.RequiresReplace = append(resp.RequiresReplace, path.Root("packer_version"))
 		// Avoid inconsistent result by keeping the planned value unknown
 		resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("packer_version"), types.StringUnknown())...)

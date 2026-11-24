@@ -2,11 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"strings"
-
-	"terraform-provider-packer/packer_interop"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 
@@ -14,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/toowoxx/go-lib-userspace-common/cmds"
 )
 
 type dataSourceVersionType struct {
@@ -41,8 +35,8 @@ func (r dataSourceVersionType) NewDataSource(_ context.Context, p provider.Provi
 }
 
 type dataSourceVersion struct {
-	p            tfProvider
-	packerBinary string
+	p        tfProvider
+	settings providerSettings
 }
 
 func (r dataSourceVersion) Metadata(_ context.Context, _ datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -51,43 +45,12 @@ func (r dataSourceVersion) Metadata(_ context.Context, _ datasource.MetadataRequ
 	}
 }
 
-func (r *dataSourceVersion) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
-	}
-	if settings, ok := req.ProviderData.(providerSettings); ok {
-		r.packerBinary = settings.PackerBinary
-	}
+func (r *dataSourceVersion) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	settings, diags := providerSettingsFrom(req.ProviderData)
+	resp.Diagnostics.Append(diags...)
+	r.settings = settings
 }
 
 func (r dataSourceVersion) Read(ctx context.Context, _ datasource.ReadRequest, resp *datasource.ReadResponse) {
-	resourceState := dataSourceVersionType{}
-	exe := r.packerBinary
-	if exe == "" {
-		exe, _ = os.Executable()
-	}
-	// Pass through current env and disable checkpoint to avoid network calls
-	env := packer_interop.EnvVars(map[string]string{}, true)
-	output, err := cmds.RunCommandWithEnvReturnOutput(exe, env, "version")
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Failed to run packer",
-			fmt.Sprintf("Command: %s version\nError: %v\nOutput:\n%s", exe, err, strings.TrimSpace(string(output))),
-		)
-		return
-	}
-
-	if len(output) == 0 {
-		resp.Diagnostics.AddError("Unexpected output", "Packer did not output anything")
-		return
-	}
-
-	resourceState.Version = strings.TrimPrefix(
-		strings.TrimSpace(strings.TrimPrefix(string(output), "Packer")), "v")
-
-	diags := resp.State.Set(ctx, &resourceState)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &dataSourceVersionType{Version: r.settings.PackerVersion})...)
 }
