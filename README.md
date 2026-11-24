@@ -1,8 +1,9 @@
 # Terraform Provider for Packer
 
 
-A Terraform provider for use with Packer. It has Packer embedded in it so that you can run it
-on any environment (including Terraform Cloud).
+A Terraform provider for use with Packer. It runs a Packer-compatible binary that you choose. It
+also embeds a build of Packer, which is deprecated and will be removed in the next release; see
+[Choosing the Packer binary](#choosing-the-packer-binary).
 
 This provider is an independent open source project. It is not affiliated with,
 sponsored by, or endorsed by HashiCorp. See the [Trademark Notice](#trademark-notice) below.
@@ -40,20 +41,13 @@ You can use the `force` attribute of resource `packer_image` to overwrite the im
 
 The remote state does not affect this provider's ability to function. If you delete an image remotely, Packer will still run and attempt to create a new one which should succeed. There is no fundamental difference between "Creation" and "Update" of a `packer_image` resource.
 
-## Custom Packer Binary
-
-If you prefer to use an external Packer binary instead of the embedded one, set the provider attribute `packer_binary` to the absolute path of your Packer executable:
+## Choosing the Packer binary
 
 ```
 provider "packer" {
   packer_binary = "/usr/local/bin/packer"
 }
 ```
-
-Alternatively, set `packer_binary_url` to download a Packer-compatible binary from a URL of your choice.
-The URL may serve a raw executable or a zip archive containing one. Downloads are cached locally and
-reused; changing the URL or checksum triggers a fresh download. Use `packer_binary_checksum` to verify
-the downloaded artifact:
 
 ```
 provider "packer" {
@@ -62,15 +56,15 @@ provider "packer" {
 }
 ```
 
-`packer_binary` and `packer_binary_url` are mutually exclusive. The provider validates the binary by
-running `packer version`. When both are unset, the embedded Packer is used.
+```
+provider "packer" {
+  packer_binary = "packer"
+}
+```
 
-This provider is an independent project and is not affiliated with, sponsored by, or endorsed
-by HashiCorp. When you point `packer_binary_url` at a download, you are responsible for choosing
-a trustworthy source and for complying with the license of the binary it serves. The provider
-neither distributes nor recommends any particular binary.
-
-Due to licensing constraints (BUSL), we are not going to be updating the embedded Packer version past the pre-BUSL commit around the 1.10.0 release.
+See [Choosing the Packer binary](docs/index.md#choosing-the-packer-binary) in the provider
+documentation for what each attribute does, your responsibility for the binary's license and the
+deprecation of the embedded Packer.
 
 ## Debugging failed Packer runs
 
@@ -94,6 +88,10 @@ embedded build is available at [github.com/toowoxx/packer](https://github.com/to
 tag `v1.10.0-toowoxx.custom.104`.
 
 When run in embedded Packer mode, the binary prints this attribution to stderr.
+
+Due to licensing constraints (BUSL), we are not going to be updating the embedded Packer version past the pre-BUSL commit around the 1.10.0 release.
+The embedded Packer is deprecated and will be removed in the next release; see
+[Choosing the Packer binary](#choosing-the-packer-binary).
 
 ## Trademark Notice
 

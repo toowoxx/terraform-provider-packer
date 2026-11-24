@@ -11,6 +11,23 @@ sponsored by, or endorsed by HashiCorp.
 
 {{ .SchemaMarkdown | trimspace }}
 
+## Choosing the Packer binary
+
+The provider runs the Packer-compatible binary you configure:
+
+- `packer_binary` takes the path of a binary on the machine running Terraform. A command name without a path, such as `packer`, is looked up on PATH.
+- `packer_binary_url` takes an http(s) URL serving a binary or a zip archive containing one, and `packer_binary_checksum` takes its SHA-256 checksum. Use it where you cannot install a binary on the machine running Terraform.
+
+The provider checks the binary by running it with the `version` argument.
+
+This provider does not supply or recommend any particular binary. You are responsible for choosing one and for complying with its license.
+
+### Deprecated: embedded Packer
+
+When neither `packer_binary` nor `packer_binary_url` is set, the provider runs a build of Packer embedded in it and shows the warning "Embedded Packer is deprecated". The embedded Packer will be removed in the next release of this provider. From that release on, when neither attribute is set, the provider runs the `packer` command found on PATH, and fails if there is none.
+
+To migrate, set `packer_binary` or `packer_binary_url` now. A binary that reports a different version than the embedded Packer (`1.10.0-mpl`) changes the `packer_version` attribute of `packer_image` resources, which replaces them. It also changes the `version` of the `packer_version` data source, which replaces resources whose `triggers` use it. Switch at a time when rebuilding the images is acceptable.
+
 ## Debugging failed Packer runs
 
 When a Packer command fails, the provider emits a warning diagnostic containing the

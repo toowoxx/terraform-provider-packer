@@ -14,9 +14,26 @@ sponsored by, or endorsed by HashiCorp.
 
 ### Optional
 
-- `packer_binary` (String) Optional path to a Packer binary to use instead of the embedded one. Conflicts with `packer_binary_url`.
+- `packer_binary` (String) Path to a Packer-compatible binary to run. A command name without a path, such as `packer`, is looked up on PATH. Conflicts with `packer_binary_url`. When neither `packer_binary` nor `packer_binary_url` is set, the provider runs its embedded Packer, which is deprecated and will be removed in the next release; from then on it runs `packer` found on PATH.
 - `packer_binary_checksum` (String) Optional SHA-256 checksum (hex, optionally prefixed with `sha256:`) used to verify the file downloaded from `packer_binary_url`. The checksum is computed over the downloaded artifact itself (e.g. the zip archive, not the binary inside it). Requires `packer_binary_url`.
-- `packer_binary_url` (String) Optional http(s) URL to download a Packer-compatible binary from, used instead of the embedded one. The URL may serve a raw executable or a zip archive containing one (a file named `packer`/`packer.exe`, or a single-file archive). Downloads are cached locally and reused; changing the URL or checksum triggers a fresh download. Conflicts with `packer_binary`. This provider is an independent project and is not affiliated with or endorsed by HashiCorp. You are responsible for choosing a trustworthy URL and for complying with the license of the downloaded binary. Use `packer_binary_checksum` to verify the download.
+- `packer_binary_url` (String) Optional http(s) URL to download a Packer-compatible binary from. The URL may serve a raw executable or a zip archive containing one (a file named `packer`/`packer.exe`, or a single-file archive). Downloads are cached locally and reused; changing the URL or checksum triggers a fresh download. Conflicts with `packer_binary`. This provider is an independent project and is not affiliated with or endorsed by HashiCorp. You are responsible for choosing a trustworthy URL and for complying with the license of the downloaded binary. Use `packer_binary_checksum` to verify the download.
+
+## Choosing the Packer binary
+
+The provider runs the Packer-compatible binary you configure:
+
+- `packer_binary` takes the path of a binary on the machine running Terraform. A command name without a path, such as `packer`, is looked up on PATH.
+- `packer_binary_url` takes an http(s) URL serving a binary or a zip archive containing one, and `packer_binary_checksum` takes its SHA-256 checksum. Use it where you cannot install a binary on the machine running Terraform.
+
+The provider checks the binary by running it with the `version` argument.
+
+This provider does not supply or recommend any particular binary. You are responsible for choosing one and for complying with its license.
+
+### Deprecated: embedded Packer
+
+When neither `packer_binary` nor `packer_binary_url` is set, the provider runs a build of Packer embedded in it and shows the warning "Embedded Packer is deprecated". The embedded Packer will be removed in the next release of this provider. From that release on, when neither attribute is set, the provider runs the `packer` command found on PATH, and fails if there is none.
+
+To migrate, set `packer_binary` or `packer_binary_url` now. A binary that reports a different version than the embedded Packer (`1.10.0-mpl`) changes the `packer_version` attribute of `packer_image` resources, which replaces them. It also changes the `version` of the `packer_version` data source, which replaces resources whose `triggers` use it. Switch at a time when rebuilding the images is acceptable.
 
 ## Debugging failed Packer runs
 
