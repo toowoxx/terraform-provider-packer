@@ -254,3 +254,6 @@ replace github.com/hashicorp/packer v1.10.0 => github.com/toowoxx/packer v1.10.0
 // plugins. This is a temporary fix until packer is updated to use the new
 // protocol. Version 1.10.0 still had some leftover gob support.
 replace github.com/zclconf/go-cty v1.13.1 => github.com/zclconf/go-cty v1.10.0
+
+// Reason in the package doc of replacement-modules/golang-jwt-v3/jwt.go.
+replace github.com/golang-jwt/jwt => ./replacement-modules/golang-jwt-v3

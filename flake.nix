@@ -30,10 +30,11 @@
             pname = "terraform-provider-packer";
             inherit version;
             src = ./.;
+            excludedPackages = [ "replacement-modules" ];
 
             # Bump this whenever the Go dependencies change. Set to
             # pkgs.lib.fakeHash to have the build report the expected value.
-            vendorHash = "sha256-cjFCWXWTcF8T5VkSwdg2bHtwvgVeb8KSkh6mMOexR4g=";
+            vendorHash = "sha256-G4yImIhbAaXQyJG0FcOmdTytNUeuF8mZUaWo0JmbhbU=";
           };
         });
 
