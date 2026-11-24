@@ -27,3 +27,6 @@ jobs:
     - name: Test
       run: go test -v ./...
 
+    - name: Scan dependencies for advisories
+      run: go run github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.1 scan source --lockfile go.mod
+

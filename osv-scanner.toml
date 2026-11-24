@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MPL-2.0
+
+[[IgnoredVulns]]
+id = "GO-2022-0635"
+reason = "aws-sdk-go v1 S3 crypto client has no fixed release; govulncheck finds no call path to it"
+
+[[IgnoredVulns]]
+id = "GO-2022-0646"
+reason = "aws-sdk-go v1 S3 crypto client has no fixed release; govulncheck finds no call path to it"
+
+[[IgnoredVulns]]
+id = "GO-2026-5932"
+reason = "golang.org/x/crypto/openpgp is unmaintained with no fix; only github.com/google/go-github/v33 in the embedded Packer fork imports it"
