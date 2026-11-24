@@ -14,8 +14,7 @@ const embeddedPackerDeprecationDetail = "Neither packer_binary nor packer_binary
 	"the Packer build embedded in it. The embedded Packer is deprecated and will be removed in the next release " +
 	"of this provider. From that release on, when neither attribute is set, the provider runs the packer command " +
 	"found on PATH.\n\n" +
-	"To choose the binary yourself, set packer_binary to the path of a Packer-compatible binary, or set " +
-	"packer_binary_url to a URL serving one and packer_binary_checksum to its SHA-256 checksum. " +
+	choosePackerBinaryStep + " " +
 	"packer_binary = \"packer\" runs the packer command found on PATH, as the next release does by default. " +
 	"This provider does not supply or recommend any particular binary.\n\n" +
 	"A binary that reports a different version than the embedded Packer changes packer_version, which replaces " +
